@@ -29,6 +29,7 @@ Repository or `dev` environment secret:
 Repository variables:
 
 - `STACK_NAME=mrisk`
+- `TERRAFORM_PROJECT_NAME=riskconnect`
 - `AWS_ACCOUNT_ID=178002661103`
 - `AWS_REGION=eu-west-1`
 - `APP_ENV=dev`
@@ -36,6 +37,8 @@ Repository variables:
 - `TFC_WORKSPACE=riskconnect-dev`
 
 GitHub Actions should not store static AWS keys.
+
+`STACK_NAME` is the product/stack label used by CI. `TERRAFORM_PROJECT_NAME` is the Terraform AWS resource prefix passed to `project_name`. While using the old `riskconnect-dev-tfc-deploy` role, keep `TERRAFORM_PROJECT_NAME=riskconnect` so Terraform manages `riskconnect-dev-*` resources instead of trying to create `mrisk-dev-*` IAM roles.
 
 ## Required HCP Terraform Workspace Configuration
 
@@ -46,9 +49,9 @@ Set these environment variables in the HCP Terraform workspace `riskconnect-dev`
 
 The bootstrap root defaults the HCP Terraform trust subject to `organization:ka-risklens-mm:project:*:workspace:riskconnect-dev:run_phase:*`. If you know the exact HCP Terraform project name, set `tfc_project` to that value; otherwise keep `*`.
 
-The current unblock path reuses the old `riskconnect-dev-tfc-deploy` role while keeping the application stack name `mrisk`. Run bootstrap with `terraform apply -var="project_name=riskconnect"`, then set `TFC_AWS_RUN_ROLE_ARN` to the old role ARN above.
+The current unblock path reuses the old `riskconnect-dev-tfc-deploy` role and the old AWS resource prefix while keeping `STACK_NAME=mrisk` as the product label. Run bootstrap with `terraform apply -var="project_name=riskconnect"`, set `TFC_AWS_RUN_ROLE_ARN` to the old role ARN above, and set GitHub `TERRAFORM_PROJECT_NAME=riskconnect`.
 
-If HCP Terraform assumes `riskconnect-dev-tfc-deploy` but still receives IAM denies for `mrisk-dev-*` roles, the live old-role policy is stale. From `infra/terraform/bootstrap`, apply the emergency inline policy:
+If HCP Terraform assumes `riskconnect-dev-tfc-deploy` but still receives IAM denies for `mrisk-dev-*` roles, either GitHub is still passing `TERRAFORM_PROJECT_NAME=mrisk` or the live old-role policy is stale. First set GitHub `TERRAFORM_PROJECT_NAME=riskconnect`. If you still need the old role to manage `mrisk-dev-*`, apply the emergency inline policy from `infra/terraform/bootstrap`:
 
 ```powershell
 aws iam put-role-policy `
@@ -84,7 +87,7 @@ Deploy flow:
 1. Checkout repository.
 2. Install Python, Node, and Terraform.
 3. Package API and worker Lambda artifacts into `infra/terraform/dev/artifacts/`.
-4. Run Terraform CLI against HCP Terraform for stack `mrisk`.
+4. Run Terraform CLI against HCP Terraform using `TERRAFORM_PROJECT_NAME` as the AWS resource prefix.
 5. Read Terraform outputs for the web bucket, CloudFront distribution, frontend URL, and GitHub deploy role ARN.
 6. Assume the GitHub OIDC deploy role.
 7. Build and upload the frontend.
@@ -108,6 +111,7 @@ Before running `deploy-dev`:
 
 - CI passes on `main`.
 - `STACK_NAME` is `mrisk`.
+- `TERRAFORM_PROJECT_NAME` is `riskconnect` while using the old run-role fallback.
 - HCP Terraform token is a team/user token, not an organization token.
 - HCP workspace has `TFC_AWS_PROVIDER_AUTH=true`.
 - HCP workspace has the current `riskconnect-dev-tfc-deploy` fallback role ARN, or the verified `mrisk-dev-tfc-deploy` final role ARN.

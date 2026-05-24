@@ -5,6 +5,7 @@ on:
 
 env:
   STACK_NAME: ${{ vars.STACK_NAME || 'mrisk' }}
+  TERRAFORM_PROJECT_NAME: ${{ vars.TERRAFORM_PROJECT_NAME || 'riskconnect' }}
 
 permissions:
   contents: read
@@ -44,7 +45,7 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Terraform apply
-        run: terraform apply -auto-approve -input=false -var="project_name=${STACK_NAME}"
+        run: terraform apply -auto-approve -input=false -var="project_name=${TERRAFORM_PROJECT_NAME}"
         working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Read Terraform outputs
@@ -78,3 +79,4 @@ jobs:
       - name: Deployment summary
         run: |
           echo "Frontend URL: $FRONTEND_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Terraform project name: $TERRAFORM_PROJECT_NAME" >> "$GITHUB_STEP_SUMMARY"

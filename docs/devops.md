@@ -18,7 +18,7 @@ Use `.github/workflows/ci.yml` for:
 
 Use `.github/workflows/deploy-dev.yml` for the manual dev deploy:
 
-- Run Terraform CLI against HCP Terraform for stack `mrisk`.
+- Run Terraform CLI against HCP Terraform. During the old-role fallback, `TERRAFORM_PROJECT_NAME=riskconnect` keeps AWS resources under the `riskconnect-dev-*` prefix.
 - Let HCP Terraform assume the AWS run role through workload identity.
 - Upload frontend build to S3.
 - Invalidate CloudFront.
@@ -60,6 +60,7 @@ Production AWS runtime should use Lambda packages or container images only if de
 ## Active Infrastructure
 
 - Stack name: `mrisk`.
+- Temporary AWS resource prefix: `riskconnect-dev` while using the old HCP Terraform run role.
 - Terraform root: `infra/terraform/dev`.
 - HCP Terraform organization: `ka-risklens-mm`.
 - HCP Terraform workspace: `riskconnect-dev`.

@@ -5,7 +5,7 @@
 The active AWS infrastructure is Terraform under `infra/terraform`.
 
 - Stack name: `mrisk`
-- Dev resource prefix: `mrisk-dev`
+- Dev resource prefix: `riskconnect-dev` while using the old-role fallback; final target is `mrisk-dev`
 - Terraform dev root: `infra/terraform/dev`
 - Terraform bootstrap root: `infra/terraform/bootstrap`
 - HCP Terraform organization: `ka-risklens-mm`
@@ -54,7 +54,7 @@ The dev root keeps modules under `dev/modules/` so HCP Terraform receives them i
 ## Naming And Tags
 
 - Stack name: `mrisk`.
-- Dev resource prefix: `mrisk-dev`.
+- Dev resource prefix: `riskconnect-dev` while using the old-role fallback; final target is `mrisk-dev`.
 - Resource names should follow `mrisk-{env}-{purpose}` when possible.
 - Required tags: `Project=mrisk`, `Environment`, `Owner`, `CostCenter=LearningMVP`, `ManagedBy=Terraform`.
 
@@ -62,8 +62,8 @@ Existing HCP names intentionally remain `ka-risklens-mm` / `riskconnect-dev`.
 
 ## IAM Principles
 
-- HCP Terraform assumes `mrisk-dev-tfc-deploy` for Terraform-managed AWS changes.
-- GitHub Actions assumes `mrisk-dev-github-deploy` only after Terraform apply, for frontend S3 sync and CloudFront invalidation.
+- HCP Terraform assumes `riskconnect-dev-tfc-deploy` during the old-role fallback.
+- GitHub Actions assumes the Terraform output `github_deploy_role_arn` after apply, for frontend S3 sync and CloudFront invalidation.
 - API Lambda can create presigned URLs only for the submissions prefix.
 - Worker Lambda can read raw submission objects and write result artifacts.
 - Worker Lambda can call Textract and Bedrock only for required actions.
