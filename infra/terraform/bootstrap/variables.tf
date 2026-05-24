@@ -43,7 +43,7 @@ variable "tfc_organization" {
 variable "tfc_project" {
   description = "HCP Terraform project name in workload identity subject matching. Use * when the project name is not fixed yet."
   type        = string
-  default     = "riskconnect"
+  default     = "*"
 }
 
 variable "tfc_workspace" {

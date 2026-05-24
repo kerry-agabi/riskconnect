@@ -44,9 +44,13 @@ Set these environment variables in the HCP Terraform workspace `riskconnect-dev`
 - `TFC_AWS_PROVIDER_AUTH=true`
 - `TFC_AWS_RUN_ROLE_ARN=arn:aws:iam::178002661103:role/mrisk-dev-tfc-deploy`
 
+The bootstrap root defaults the HCP Terraform trust subject to `organization:ka-risklens-mm:project:*:workspace:riskconnect-dev:run_phase:*`. If you know the exact HCP Terraform project name, set `tfc_project` to that value; otherwise keep `*`.
+
 If migrating from the old `riskconnect` resource prefix, rerun the bootstrap root and update `TFC_AWS_RUN_ROLE_ARN` to the new `mrisk-dev-tfc-deploy` role ARN before running `deploy-dev`.
 
 If the deploy log shows an assumed role like `arn:aws:sts::178002661103:assumed-role/riskconnect-dev-tfc-deploy/...`, HCP Terraform is still using the old role. Update the workspace variable to `arn:aws:iam::178002661103:role/mrisk-dev-tfc-deploy`.
+
+If the deploy log shows `No valid credential sources found` and `AccessDenied: Not authorized to perform sts:AssumeRoleWithWebIdentity`, the AWS role trust policy does not match the HCP Terraform token. Rerun bootstrap and confirm its `tfc_subject_condition` output matches `organization:ka-risklens-mm:project:*:workspace:riskconnect-dev:run_phase:*` or the exact HCP project name you configured.
 
 During the rename, the new run role is allowed to clean up legacy `riskconnect-dev-*` IAM roles. After the old resources are gone, remove `riskconnect-dev` from `legacy_iam_name_prefixes` in the bootstrap root.
 
@@ -84,7 +88,7 @@ Run once from an admin-capable AWS session:
 ```powershell
 cd infra/terraform/bootstrap
 terraform init
-terraform apply -var="project_name=mrisk"
+terraform apply
 ```
 
 The bootstrap output `tfc_run_role_arn` must be copied to HCP Terraform as `TFC_AWS_RUN_ROLE_ARN`.
