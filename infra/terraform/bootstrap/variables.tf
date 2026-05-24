@@ -37,12 +37,19 @@ variable "tfc_organization" {
 variable "tfc_project" {
   description = "HCP Terraform project name in workload identity subject matching. Use * when the project name is not fixed yet."
   type        = string
-  default     = "*"
+  default     = "riskconnect"
 }
 
 variable "tfc_workspace" {
   description = "HCP Terraform workspace that will run the dev stack."
   type        = string
   default     = "riskconnect-dev"
+}
+
+variable "aws_profile" {
+
+  description = "AWS CLI profile name to use for authentication. Ensure this profile has the necessary permissions to manage AWS resources for the project."
+  type        = string
+  default     = "kerry-agabi"
 }
 
