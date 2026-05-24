@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risklens-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risklens-frontend
+  template:
+    metadata:
+      labels:
+        app: risklens-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: risklens-frontend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5173
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risklens-frontend
+spec:
+  selector:
+    app: risklens-frontend
+  ports:
+    - port: 5173
+      targetPort: 5173
+

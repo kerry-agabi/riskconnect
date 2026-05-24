@@ -1,0 +1,16 @@
+:root {
+  --color-navy: #0f2a3f;
+  --color-navy-light: #1a3a52;
+  --color-teal: #0e7c86;
+  --color-teal-light: #e6f5f6;
+  --color-surface: #ffffff;
+  --color-bg: #f6f8fb;
+  --color-text: #172026;
+  --color-text-muted: #52606d;
+  --color-border: #dfe3e8;
+  --color-success: #1a7f37;
+  --color-warning: #9a6700;
+  --color-danger: #cf222e;
+  --radius: 6px;
+  --nav-height: 56px;
+}

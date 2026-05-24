@@ -1,0 +1,12 @@
+aws_account_id           = "178002661103"
+aws_region               = "eu-west-1"
+project_name             = "riskconnect"
+app_env                  = "dev"
+owner                    = "kerry-agabi"
+github_owner             = "kerry-agabi"
+github_repo              = "riskconnect"
+github_environment       = "dev"
+monthly_budget_limit_usd = 50
+budget_alert_email       = ""
+force_destroy_buckets    = false
+

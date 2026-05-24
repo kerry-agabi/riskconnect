@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risklens-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risklens-backend
+  template:
+    metadata:
+      labels:
+        app: risklens-backend
+    spec:
+      containers:
+        - name: backend
+          image: risklens-backend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risklens-backend
+spec:
+  selector:
+    app: risklens-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+

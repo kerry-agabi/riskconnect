@@ -1,0 +1,76 @@
+name: deploy-dev
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      TF_WORKING_DIR: infra/terraform/dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          cli_config_credentials_token: ${{ secrets.TFC_API_TOKEN }}
+          terraform_wrapper: false
+
+      - name: Package Lambda artifacts
+        run: python infra/scripts/package_lambdas.py
+
+      - name: Terraform init
+        run: terraform init -input=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve -input=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Read Terraform outputs
+        shell: bash
+        run: |
+          {
+            echo "WEB_BUCKET=$(terraform output -raw web_bucket_name)"
+            echo "CLOUDFRONT_DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)"
+            echo "FRONTEND_URL=$(terraform output -raw frontend_url)"
+            echo "GITHUB_DEPLOY_ROLE_ARN=$(terraform output -raw github_deploy_role_arn)"
+          } >> "$GITHUB_ENV"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.GITHUB_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build frontend
+        run: |
+          npm ci
+          npm run build
+        working-directory: frontend
+
+      - name: Deploy frontend
+        run: >
+          python infra/scripts/deploy_frontend.py
+          --bucket "$WEB_BUCKET"
+          --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID"
+
+      - name: Deployment summary
+        run: echo "Frontend URL: $FRONTEND_URL" >> "$GITHUB_STEP_SUMMARY"
+

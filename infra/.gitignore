@@ -1,0 +1,7 @@
+.build/
+terraform/dev/artifacts/
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.*
+terraform/**/tfplan
+terraform/**/tfplan.*
