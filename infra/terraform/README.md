@@ -5,7 +5,10 @@
 - `bootstrap/`: one-time local bootstrap for the HCP Terraform AWS OIDC provider and run role.
 - `dev/`: active dev environment using HCP Terraform remote execution.
 
-## Modules
+## Dev Modules
+
+The `dev/` root keeps its local modules under `dev/modules/` so HCP Terraform
+receives them in the uploaded remote-run configuration bundle.
 
 - `api`: Lambda and API Gateway HTTP API.
 - `data`: DynamoDB on-demand tables.
@@ -15,4 +18,3 @@
 - `web`: private S3 frontend hosting behind CloudFront OAC.
 
 Generated Lambda artifacts are written to `dev/artifacts/` before Terraform runs so HCP Terraform can upload them with the configuration.
-

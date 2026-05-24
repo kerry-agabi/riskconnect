@@ -14,14 +14,14 @@ locals {
 }
 
 module "data" {
-  source = "../modules/data"
+  source = "./modules/data"
 
   name_prefix = local.name_prefix
   tags        = local.tags
 }
 
 module "processing" {
-  source = "../modules/processing"
+  source = "./modules/processing"
 
   name_prefix                 = local.name_prefix
   aws_account_id              = var.aws_account_id
@@ -34,7 +34,7 @@ module "processing" {
 }
 
 module "api" {
-  source = "../modules/api"
+  source = "./modules/api"
 
   name_prefix             = local.name_prefix
   aws_region              = var.aws_region
@@ -55,7 +55,7 @@ module "api" {
 }
 
 module "web" {
-  source = "../modules/web"
+  source = "./modules/web"
 
   name_prefix           = local.name_prefix
   aws_account_id        = var.aws_account_id
@@ -66,7 +66,7 @@ module "web" {
 }
 
 module "github_deploy" {
-  source = "../modules/github_deploy"
+  source = "./modules/github_deploy"
 
   name_prefix                 = local.name_prefix
   aws_account_id              = var.aws_account_id
@@ -81,7 +81,7 @@ module "github_deploy" {
 }
 
 module "observability" {
-  source = "../modules/observability"
+  source = "./modules/observability"
 
   name_prefix              = local.name_prefix
   monthly_budget_limit_usd = var.monthly_budget_limit_usd
@@ -91,4 +91,3 @@ module "observability" {
   dlq_name                 = module.processing.dlq_name
   tags                     = local.tags
 }
-
