@@ -102,7 +102,6 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      AWS_REGION            = var.aws_region
       DYNAMODB_TABLE        = var.submissions_table_name
       HAZARDS_TABLE         = var.hazards_table_name
       LOG_LEVEL             = "INFO"
@@ -164,4 +163,3 @@ resource "aws_lambda_permission" "api_gateway" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
 }
-

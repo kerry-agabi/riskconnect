@@ -177,7 +177,6 @@ resource "aws_lambda_function" "worker" {
   environment {
     variables = {
       AWS_ACCOUNT_ID     = var.aws_account_id
-      AWS_REGION         = var.aws_region
       SUBMISSIONS_BUCKET = aws_s3_bucket.submissions.bucket
       QUEUE_URL          = aws_sqs_queue.processing.url
       LOG_LEVEL          = "INFO"
