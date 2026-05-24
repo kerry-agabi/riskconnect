@@ -46,6 +46,10 @@ Set these environment variables in the HCP Terraform workspace `riskconnect-dev`
 
 If migrating from the old `riskconnect` resource prefix, rerun the bootstrap root and update `TFC_AWS_RUN_ROLE_ARN` to the new `mrisk-dev-tfc-deploy` role ARN before running `deploy-dev`.
 
+If the deploy log shows an assumed role like `arn:aws:sts::178002661103:assumed-role/riskconnect-dev-tfc-deploy/...`, HCP Terraform is still using the old role. Update the workspace variable to `arn:aws:iam::178002661103:role/mrisk-dev-tfc-deploy`.
+
+During the rename, the new run role is allowed to clean up legacy `riskconnect-dev-*` IAM roles. After the old resources are gone, remove `riskconnect-dev` from `legacy_iam_name_prefixes` in the bootstrap root.
+
 ## CI Workflow
 
 `.github/workflows/ci.yml` runs on pull requests and pushes to `main`.

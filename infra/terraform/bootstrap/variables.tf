@@ -22,6 +22,12 @@ variable "app_env" {
   default     = "dev"
 }
 
+variable "legacy_iam_name_prefixes" {
+  description = "Legacy IAM name prefixes that the HCP Terraform run role may clean up during stack renames."
+  type        = list(string)
+  default     = ["riskconnect-dev"]
+}
+
 variable "owner" {
   description = "Owner tag value."
   type        = string

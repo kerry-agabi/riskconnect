@@ -2,6 +2,9 @@ aws_account_id   = "178002661103"
 aws_region       = "eu-west-1"
 project_name     = "mrisk"
 app_env          = "dev"
+legacy_iam_name_prefixes = [
+  "riskconnect-dev",
+]
 owner            = "kerry-agabi"
 tfc_organization = "ka-risklens-mm"
 tfc_project      = "*"

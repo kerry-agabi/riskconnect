@@ -1,5 +1,24 @@
 locals {
   name_prefix = "${var.project_name}-${var.app_env}"
+  managed_iam_name_prefixes = distinct(concat(
+    [local.name_prefix],
+    var.legacy_iam_name_prefixes,
+  ))
+
+  managed_iam_policy_arns = [
+    for prefix in local.managed_iam_name_prefixes :
+    "arn:aws:iam::${var.aws_account_id}:policy/${prefix}-*"
+  ]
+
+  managed_iam_role_arns = [
+    for prefix in local.managed_iam_name_prefixes :
+    "arn:aws:iam::${var.aws_account_id}:role/${prefix}-*"
+  ]
+
+  managed_iam_instance_profile_arns = [
+    for prefix in local.managed_iam_name_prefixes :
+    "arn:aws:iam::${var.aws_account_id}:instance-profile/${prefix}-*"
+  ]
 
   tags = {
     Project     = "mrisk"
@@ -95,6 +114,8 @@ data "aws_iam_policy_document" "tfc_deploy" {
     effect = "Allow"
 
     actions = [
+      "iam:ListInstanceProfiles",
+      "iam:ListInstanceProfilesForRole",
       "iam:ListOpenIDConnectProviders",
       "iam:ListPolicies",
       "iam:ListRoles",
@@ -135,6 +156,7 @@ data "aws_iam_policy_document" "tfc_deploy" {
       "iam:DeleteRole",
       "iam:DeleteRolePolicy",
       "iam:DetachRolePolicy",
+      "iam:GetInstanceProfile",
       "iam:GetPolicy",
       "iam:GetPolicyVersion",
       "iam:GetRole",
@@ -145,6 +167,7 @@ data "aws_iam_policy_document" "tfc_deploy" {
       "iam:ListRoleTags",
       "iam:PassRole",
       "iam:PutRolePolicy",
+      "iam:RemoveRoleFromInstanceProfile",
       "iam:TagOpenIDConnectProvider",
       "iam:TagPolicy",
       "iam:TagRole",
@@ -154,10 +177,11 @@ data "aws_iam_policy_document" "tfc_deploy" {
       "iam:UpdateAssumeRolePolicy",
     ]
 
-    resources = [
-      "arn:aws:iam::${var.aws_account_id}:policy/${local.name_prefix}-*",
-      "arn:aws:iam::${var.aws_account_id}:role/${local.name_prefix}-*",
-    ]
+    resources = concat(
+      local.managed_iam_policy_arns,
+      local.managed_iam_role_arns,
+      local.managed_iam_instance_profile_arns,
+    )
   }
 }
 
