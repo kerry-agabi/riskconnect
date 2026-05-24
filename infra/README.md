@@ -1,10 +1,11 @@
-# RiskConnect Infrastructure
+# mrisk Infrastructure
 
-This folder contains the active AWS and CI/CD infrastructure path for the RiskConnect dev environment.
+This folder contains the active AWS and CI/CD infrastructure path for the `mrisk` dev stack.
 
 ## Active Stack
 
 - Terraform root: `infra/terraform/dev`
+- Stack name/resource prefix: `mrisk`
 - HCP Terraform organization: `ka-risklens-mm`
 - HCP Terraform workspace: `riskconnect-dev`
 - AWS account: `178002661103`
@@ -32,11 +33,12 @@ No AWS access keys should be stored in GitHub.
 3. In HCP Terraform workspace `riskconnect-dev`, set:
 
    - `TFC_AWS_PROVIDER_AUTH=true`
-   - `TFC_AWS_RUN_ROLE_ARN=<bootstrap output tfc_run_role_arn>`
+   - `TFC_AWS_RUN_ROLE_ARN=<bootstrap output tfc_run_role_arn>`; for the `mrisk` stack this should be the `mrisk-dev-tfc-deploy` role ARN.
 
 4. In GitHub repository settings, set:
 
    - Secret `TFC_API_TOKEN`
+   - Variable `STACK_NAME=mrisk`
    - Variable `AWS_ACCOUNT_ID=178002661103`
    - Variable `AWS_REGION=eu-west-1`
    - Variable `APP_ENV=dev`
@@ -44,4 +46,3 @@ No AWS access keys should be stored in GitHub.
    - Variable `TFC_WORKSPACE=riskconnect-dev`
 
 5. Run the manual `deploy-dev` workflow.
-

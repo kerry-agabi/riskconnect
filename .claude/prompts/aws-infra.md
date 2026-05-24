@@ -2,7 +2,7 @@
 
 Use `aws-infra-lead`.
 
-Task: implement one CDK stack or infrastructure concern for RiskLens.
+Task: implement one Terraform module/root or infrastructure concern for RiskLens.
 
 Read:
 
@@ -15,8 +15,7 @@ Constraints:
 - Serverless-first.
 - No expensive default services.
 - Least-privilege IAM.
-- Consistent names and tags.
+- Consistent `mrisk` stack names and tags.
 - Budget/log-retention controls.
 
-Run `cdk synth` if dependencies are available. Do not deploy without explicit approval.
-
+Run Terraform format/init/validate checks if dependencies are available. Do not apply, destroy, or dispatch deploy workflows without explicit approval.

@@ -30,11 +30,12 @@ Expected: an `aws-cli/2.x` version string.
 Recommended MVP defaults:
 
 ```powershell
-$env:AWS_REGION="us-east-1"
-$env:AWS_PROFILE="risklens-dev"
+$env:AWS_REGION="eu-west-1"
+$env:AWS_PROFILE="mrisk-dev"
+$env:STACK_NAME="mrisk"
 ```
 
-Use a region where your account has Bedrock model access. For many accounts, `us-east-1` is the simplest starting point.
+The active dev stack uses `eu-west-1`. Confirm Bedrock model access in the selected region before running live GenAI tests.
 
 ## 3. Configure IAM Identity Center
 
@@ -43,7 +44,7 @@ Prefer IAM Identity Center over long-lived IAM access keys.
 Run:
 
 ```powershell
-aws configure sso --profile risklens-dev
+aws configure sso --profile mrisk-dev
 ```
 
 Enter:
@@ -52,19 +53,19 @@ Enter:
 - SSO region.
 - AWS account ID.
 - Permission set, ideally a least-privilege developer or PowerUser-style permission set for the learning account.
-- Default client region: `us-east-1`.
+- Default client region: `eu-west-1`.
 - Default output format: `json`.
 
 Login:
 
 ```powershell
-aws sso login --profile risklens-dev
+aws sso login --profile mrisk-dev
 ```
 
 Verify identity:
 
 ```powershell
-aws sts get-caller-identity --profile risklens-dev
+aws sts get-caller-identity --profile mrisk-dev
 ```
 
 ## 4. Configure Project Environment
@@ -74,19 +75,21 @@ Create local environment values from `.env.example` as needed. Do not commit rea
 For one terminal session:
 
 ```powershell
-$env:AWS_PROFILE="risklens-dev"
-$env:AWS_REGION="us-east-1"
+$env:AWS_PROFILE="mrisk-dev"
+$env:AWS_REGION="eu-west-1"
 $env:APP_ENV="dev"
+$env:STACK_NAME="mrisk"
 ```
 
-For CDK commands:
+For Terraform validation:
 
 ```powershell
-cd infra/cdk
-cdk synth --profile risklens-dev
+cd infra/terraform/dev
+terraform init -backend=false -input=false
+terraform validate -no-color
 ```
 
-Do not run `cdk deploy` until the CDK stacks, budget alarms, and IAM permissions have been reviewed.
+Do not run `terraform apply`, `terraform destroy`, or `deploy-dev` until budget alarms, IAM permissions, and HCP Terraform workspace variables have been reviewed.
 
 ## 5. Check Bedrock Access
 
@@ -107,7 +110,6 @@ Before live testing:
 ## Troubleshooting
 
 - If `aws` is not recognized, reopen VS Code or restart Windows.
-- If SSO login fails, rerun `aws configure sso --profile risklens-dev`.
-- If CDK cannot find credentials, confirm `$env:AWS_PROFILE` and run `aws sts get-caller-identity --profile risklens-dev`.
+- If SSO login fails, rerun `aws configure sso --profile mrisk-dev`.
+- If Terraform/AWS commands cannot find credentials, confirm `$env:AWS_PROFILE` and run `aws sts get-caller-identity --profile mrisk-dev`.
 - If Bedrock calls fail with access errors, verify model access in the Bedrock console for the selected region.
-

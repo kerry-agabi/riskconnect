@@ -16,6 +16,6 @@ Constraints:
 - One repair retry for invalid JSON.
 - No invented facts, bind/decline/pricing, or actuarial claims.
 - Token and cost caps.
+- Live Bedrock permissions and worker runtime settings are managed by the Terraform/HCP Terraform `mrisk` stack.
 
 Add tests for prompt injection and invalid JSON where relevant.
-

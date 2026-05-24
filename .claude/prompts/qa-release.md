@@ -11,5 +11,4 @@ Read:
 - `docs/cost-plan.md`
 - `docs/delivery-tasks.md`
 
-Return findings first, ordered by severity. Include missing tests, security/privacy risks, cost risks, contract drift, UI quality gaps, and verification performed.
-
+Return findings first, ordered by severity. Include missing tests, security/privacy risks, cost risks, contract drift, `mrisk` Terraform/deploy drift, UI quality gaps, and verification performed.

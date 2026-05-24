@@ -57,7 +57,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "web" {
 
 resource "aws_cloudfront_origin_access_control" "web" {
   name                              = "${var.name_prefix}-web-oac"
-  description                       = "CloudFront access control for the RiskConnect web bucket."
+  description                       = "CloudFront access control for the mrisk web bucket."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
@@ -164,4 +164,3 @@ resource "aws_s3_bucket_policy" "web" {
   bucket = aws_s3_bucket.web.id
   policy = data.aws_iam_policy_document.web_bucket.json
 }
-

@@ -10,7 +10,7 @@ Read these first, only as needed:
 - Architecture: `docs/architecture.md`
 - API contract: `docs/api-contract.md`
 - GenAI rules: `docs/genai-design.md`
-- AWS infra: `docs/aws-infrastructure.md`
+- AWS infra: `docs/aws-infrastructure.md` (`mrisk` stack, Terraform/HCP Terraform)
 - Delivery backlog: `docs/delivery-tasks.md`
 
 ## Non-Negotiables
@@ -34,6 +34,5 @@ Read these first, only as needed:
 
 - Frontend must look like a polished enterprise insurance workflow, not a generic AI template.
 - Backend must use typed schemas, dependency injection seams, structured logging, reusable service boundaries, and testable AWS wrappers.
-- Infrastructure must use consistent names, tags, least privilege, budget alarms, and environment-aware config.
+- Infrastructure must use the `mrisk` stack prefix, Terraform/HCP Terraform, consistent tags, least privilege, budget alarms, and environment-aware config.
 - GenAI outputs must be schema-validated, evidence-grounded, and explicitly framed as broker-reviewable drafts.
-

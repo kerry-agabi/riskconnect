@@ -19,9 +19,10 @@ variable "worker_lambda_package_path" {
 }
 
 variable "worker_reserved_concurrency" {
-  description = "Reserved concurrency for the async worker Lambda."
+  description = "Optional reserved concurrency for the async worker Lambda. Null leaves concurrency in the account-level unreserved pool."
   type        = number
-  default     = 2
+  default     = null
+  nullable    = true
 }
 
 variable "log_retention_days" {
@@ -40,4 +41,3 @@ variable "tags" {
   description = "Common tags."
   type        = map(string)
 }
-

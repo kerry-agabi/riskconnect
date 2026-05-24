@@ -1,6 +1,6 @@
 # Legacy CDK Scaffold
 
-This scaffold is retained for reference only. The active AWS infrastructure path is Terraform under `infra/terraform`.
+This scaffold is retained for reference only. The active AWS infrastructure path is Terraform under `infra/terraform` for stack `mrisk`.
 
 ## Historical Stacks
 

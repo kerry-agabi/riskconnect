@@ -74,7 +74,7 @@ def package_worker(repo_root: Path, build_root: Path, artifacts_dir: Path) -> Pa
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Package RiskConnect Lambda artifacts.")
+    parser = argparse.ArgumentParser(description="Package mrisk Lambda artifacts.")
     parser.add_argument(
         "--artifacts-dir",
         default=None,
@@ -100,4 +100,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

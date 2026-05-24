@@ -14,7 +14,7 @@ For the exact implementation prompt sequence, use `docs/claude-code-implementati
 | --- | --- | --- |
 | `frontend-ui-lead` | React UI, responsive design, Marsh-brand implementation | `docs/README.md`, `.claude/skills/risklens-ui-standard.md` |
 | `backend-platform-lead` | Python API, worker, AWS integration boundaries | `docs/api-contract.md`, `.claude/skills/risklens-backend-standard.md` |
-| `aws-infra-lead` | CDK, IAM, stack naming, budgets | `docs/aws-infrastructure.md`, `.claude/skills/risklens-aws-standard.md` |
+| `aws-infra-lead` | Terraform/HCP Terraform, IAM, stack naming, budgets | `docs/aws-infrastructure.md`, `.claude/skills/risklens-aws-standard.md` |
 | `genai-workflow-lead` | Bedrock prompts, schemas, token/cost controls | `docs/genai-design.md`, `.claude/skills/risklens-genai-standard.md` |
 | `data-enrichment-lead` | FEMA/OpenFEMA/NOAA/Census data ingestion | `docs/data-sources.md` |
 | `devops-release-lead` | GitHub Actions, Docker, local/dev deploy flow | `docs/devops.md`, `docs/github-cicd-setup.md` |
@@ -27,7 +27,7 @@ For the exact implementation prompt sequence, use `docs/claude-code-implementati
 3. Worker: SQS processing, OCR/text extraction, status events.
 4. Data enrichment: geocoding and hazard cache.
 5. GenAI: extraction and risk brief prompts with JSON validation.
-6. Infrastructure: CDK stacks, budgets, deployment workflow.
+6. Infrastructure: Terraform modules, HCP Terraform remote runs, budgets, deployment workflow.
 7. QA: tests, security review, cost review, demo hardening.
 
 ## Delegation Rules
@@ -42,6 +42,6 @@ For the exact implementation prompt sequence, use `docs/claude-code-implementati
 
 - Frontend: responsive, accessible, brand-compliant, no overlapping text, no marketing landing page.
 - Backend: typed schemas, structured logs, deterministic status transitions, no raw document text in logs.
-- Infra: `cdk synth` passes, least-privilege IAM, budget alarms, no expensive defaults.
+- Infra: `terraform fmt`, `terraform init -backend=false`, and `terraform validate` pass; least-privilege IAM, budget alarms, no expensive defaults.
 - GenAI: schema validation, bounded tokens, evidence-grounded output, no underwriting decisions.
-- DevOps: CI covers frontend build, backend lint/tests, Docker build, CDK synth.
+- DevOps: CI covers frontend build, backend lint/tests, Docker build, Lambda packaging, and Terraform validation.

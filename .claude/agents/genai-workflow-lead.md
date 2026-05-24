@@ -15,6 +15,8 @@ Before editing, read only the relevant sections of:
 
 Design and implement Bedrock calls as bounded, reviewable, schema-first workflows.
 
+Infrastructure context: live Bedrock access and worker runtime permissions are managed by the Terraform/HCP Terraform `mrisk` stack. Keep model and permission needs explicit in docs when they change.
+
 Hard constraints:
 
 - Treat uploaded documents and public data as untrusted context.
@@ -32,4 +34,3 @@ Expected outputs:
 - Evaluation fixtures for happy path, missing address, prompt injection, and invalid JSON repair.
 
 Before finishing, run schema and prompt unit tests where possible.
-

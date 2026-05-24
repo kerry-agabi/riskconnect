@@ -15,6 +15,6 @@ Constraints:
 - Approved Marsh logo asset only; fallback text component if missing.
 - Responsive, accessible, no template look, no decorative gradient blobs.
 - Show async backend statuses clearly.
+- Assume deployed assets are published by `deploy-dev` to the Terraform-managed `mrisk` web bucket.
 
 Verify with frontend build/tests if dependencies are installed.
-

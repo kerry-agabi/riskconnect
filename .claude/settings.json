@@ -10,15 +10,18 @@
       "Read(./backend/data/raw/**)",
       "Read(./frontend/dist/**)",
       "Read(./cdk.out/**)",
+      "Read(./infra/terraform/**/.terraform/**)",
       "Bash(aws configure set aws_secret_access_key:*)",
       "Bash(aws s3 cp * s3://*:*)",
       "Bash(aws s3 sync * s3://*:*)",
+      "Bash(terraform destroy:*)",
       "Bash(cdk deploy:*)",
       "Bash(cdk destroy:*)"
     ],
     "ask": [
       "Bash(aws sts get-caller-identity:*)",
       "Bash(aws bedrock*:*)",
+      "Bash(terraform apply:*)",
       "Bash(cdk bootstrap:*)",
       "Bash(git push:*)",
       "Bash(gh workflow run:*)"
@@ -29,4 +32,3 @@
   },
   "includeCoAuthoredBy": false
 }
-

@@ -1,178 +1,100 @@
 # GitHub CI/CD Setup
 
-This guide sets up version control and CI/CD for the RiskLens MVP.
+This guide documents the active CI/CD setup for the RiskLens MVP infrastructure stack.
 
-Official references:
+## Active Defaults
 
-- GitHub Actions OIDC with AWS: https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws
-- AWS credentials action: https://github.com/aws-actions/configure-aws-credentials
+- Stack name: `mrisk`
+- GitHub repository: `kerry-agabi/riskconnect`
+- HCP Terraform organization: `ka-risklens-mm`
+- HCP Terraform workspace: `riskconnect-dev`
+- AWS account: `178002661103`
+- AWS region: `eu-west-1`
 
-## 1. Initialize Version Control
+The legacy CDK scaffold is reference only. Active deploys use Terraform and HCP Terraform.
 
-From the repo root:
+## Branch And Secret Safety
+
+- `main` is the deployable trunk.
+- Require pull requests and passing checks before merging.
+- Never commit `.env`, AWS access keys, Terraform state, Lambda artifacts, frontend builds, raw submissions, or raw public data dumps.
+- Use GitHub secrets for tokens. Do not store tokens in repository variables.
+
+## Required GitHub Configuration
+
+Repository or `dev` environment secret:
+
+- `TFC_API_TOKEN`: HCP Terraform team or user token with access to create runs/configuration versions in `riskconnect-dev`.
+
+Repository variables:
+
+- `STACK_NAME=mrisk`
+- `AWS_ACCOUNT_ID=178002661103`
+- `AWS_REGION=eu-west-1`
+- `APP_ENV=dev`
+- `TFC_ORGANIZATION=ka-risklens-mm`
+- `TFC_WORKSPACE=riskconnect-dev`
+
+GitHub Actions should not store static AWS keys.
+
+## Required HCP Terraform Workspace Configuration
+
+Set these environment variables in the HCP Terraform workspace `riskconnect-dev`:
+
+- `TFC_AWS_PROVIDER_AUTH=true`
+- `TFC_AWS_RUN_ROLE_ARN=arn:aws:iam::178002661103:role/mrisk-dev-tfc-deploy`
+
+If migrating from the old `riskconnect` resource prefix, rerun the bootstrap root and update `TFC_AWS_RUN_ROLE_ARN` to the new `mrisk-dev-tfc-deploy` role ARN before running `deploy-dev`.
+
+## CI Workflow
+
+`.github/workflows/ci.yml` runs on pull requests and pushes to `main`.
+
+It validates:
+
+- Frontend install, lint, tests, and build.
+- Backend install, ruff, mypy, and pytest.
+- Docker image builds tagged with the `mrisk` stack name.
+- Lambda artifact packaging.
+- Terraform format/init/validate for `infra/terraform/dev` and `infra/terraform/bootstrap`.
+
+## Manual Deploy Workflow
+
+`.github/workflows/deploy-dev.yml` is manual-only for MVP cost and safety control.
+
+Deploy flow:
+
+1. Checkout repository.
+2. Install Python, Node, and Terraform.
+3. Package API and worker Lambda artifacts into `infra/terraform/dev/artifacts/`.
+4. Run Terraform CLI against HCP Terraform for stack `mrisk`.
+5. Read Terraform outputs for the web bucket, CloudFront distribution, frontend URL, and GitHub deploy role ARN.
+6. Assume the GitHub OIDC deploy role.
+7. Build and upload the frontend.
+8. Invalidate CloudFront.
+
+## Bootstrap
+
+Run once from an admin-capable AWS session:
 
 ```powershell
-git init
-git add .
-git commit -m "chore: initialize risklens mvp"
+cd infra/terraform/bootstrap
+terraform init
+terraform apply -var="project_name=mrisk"
 ```
 
-Recommended branch model:
+The bootstrap output `tfc_run_role_arn` must be copied to HCP Terraform as `TFC_AWS_RUN_ROLE_ARN`.
 
-- `main`: deployable trunk.
-- Feature branches: `feature/<short-name>`.
-- Pull requests required for merges.
+## Release Checklist
 
-Use concise conventional commits:
-
-- `feat: add upload status api`
-- `fix: handle missing geocode result`
-- `docs: add aws cli setup`
-- `chore: update ci`
-
-## 2. Protect Secrets
-
-Never commit:
-
-- `.env` or `.env.*`
-- AWS access keys
-- SSO cache files
-- Raw submissions
-- Raw public data dumps
-- CDK output
-- Frontend build output
-
-The `.gitignore` and `.claude/settings.json` are configured to reduce accidental exposure.
-
-## 3. Configure GitHub Repository
-
-Create a GitHub repository and push:
-
-```powershell
-git remote add origin https://github.com/<owner>/<repo>.git
-git branch -M main
-git push -u origin main
-```
-
-Enable branch protection for `main`:
-
-- Require pull request before merging.
-- Require status checks.
-- Require branches to be up to date before merging.
-- Block force pushes.
-- Block deletions.
-
-## 4. Configure AWS OIDC For GitHub Actions
-
-Prefer OIDC over static AWS keys.
-
-Create an IAM OIDC provider:
-
-- Provider URL: `https://token.actions.githubusercontent.com`
-- Audience: `sts.amazonaws.com`
-
-Create a deploy role such as:
-
-```text
-risklens-github-actions-deploy-role
-```
-
-Trust policy shape:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-        },
-        "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:<OWNER>/<REPO>:ref:refs/heads/main"
-        }
-      }
-    }
-  ]
-}
-```
-
-Use least privilege for the role. During early MVP development, a scoped CDK deploy policy may be broader than final production policy, but it must be limited to the RiskLens dev account and reviewed before use.
-
-## 5. Repository Variables And Secrets
-
-Use repository variables:
-
-- `AWS_REGION`: `us-east-1`
-- `APP_ENV`: `dev`
-- `CDK_DEFAULT_ACCOUNT`: AWS account ID
-- `CDK_DEPLOY_ROLE_ARN`: OIDC deploy role ARN
-
-Avoid repository secrets for AWS access keys. If a temporary key fallback is unavoidable, rotate it after use and remove it once OIDC works.
-
-## 6. CI Workflow
-
-The existing `.github/workflows/ci.yml` should validate:
-
-- Frontend install/build.
-- Backend install, ruff, pytest.
-- Docker builds.
-- CDK synth.
-
-Recommended improvements as implementation matures:
-
-- Add dependency caching after lockfiles exist.
-- Add frontend unit tests once UI tests exist.
-- Add `mypy` once backend types stabilize.
-- Upload build/test artifacts only when useful.
-
-## 7. Manual Deploy Workflow
-
-Add a separate manual workflow later, for example `.github/workflows/deploy-dev.yml`.
-
-Required workflow permissions:
-
-```yaml
-permissions:
-  id-token: write
-  contents: read
-```
-
-Credential step:
-
-```yaml
-- uses: aws-actions/configure-aws-credentials@v4
-  with:
-    role-to-assume: ${{ vars.CDK_DEPLOY_ROLE_ARN }}
-    aws-region: ${{ vars.AWS_REGION }}
-```
-
-Deployment steps:
-
-```yaml
-- run: npm install -g aws-cdk
-- run: python -m pip install -r requirements.txt
-  working-directory: infra/cdk
-- run: cdk deploy --all --require-approval never
-  working-directory: infra/cdk
-```
-
-Keep deploy manual until costs and stack permissions are stable.
-
-## 8. Release Checklist
-
-Before running a deploy:
+Before running `deploy-dev`:
 
 - CI passes on `main`.
-- `cdk synth` reviewed.
+- `STACK_NAME` is `mrisk`.
+- HCP Terraform token is a team/user token, not an organization token.
+- HCP workspace has `TFC_AWS_PROVIDER_AUTH=true`.
+- HCP workspace has the current `mrisk-dev-tfc-deploy` role ARN.
 - AWS budget alert exists.
-- Bedrock model access confirmed.
-- No real client data in test fixtures.
-- No expensive services added.
-- Rollback plan is documented in the pull request.
-
+- Bedrock model access is confirmed if live GenAI processing is enabled.
+- No real client data is present in fixtures or artifacts.
+- Rollback notes are documented in the pull request or deployment notes.

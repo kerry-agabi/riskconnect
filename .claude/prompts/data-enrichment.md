@@ -15,7 +15,7 @@ Constraints:
 - No large raw datasets committed.
 - County FIPS is the MVP join key.
 - Preserve source provenance.
+- Durable enrichment storage belongs in the Terraform-managed `mrisk` stack.
 - Missing/ambiguous data returns reviewable status, not invented data.
 
 Use tiny fixtures for tests.
-

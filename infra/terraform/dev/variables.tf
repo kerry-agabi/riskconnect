@@ -5,7 +5,7 @@ variable "aws_account_id" {
 }
 
 variable "aws_region" {
-  description = "Primary AWS region for RiskConnect."
+  description = "Primary AWS region for the mrisk stack."
   type        = string
   default     = "eu-west-1"
 }
@@ -13,7 +13,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Short project/resource prefix."
   type        = string
-  default     = "riskconnect"
+  default     = "mrisk"
 }
 
 variable "app_env" {
@@ -41,7 +41,7 @@ variable "github_repo" {
 }
 
 variable "github_environment" {
-  description = "GitHub environment used by the manual deploy workflow."
+  description = "GitHub environment used by the manual deploy workflow for stack mrisk."
   type        = string
   default     = "dev"
 }
@@ -71,9 +71,10 @@ variable "worker_lambda_package_path" {
 }
 
 variable "worker_reserved_concurrency" {
-  description = "Reserved concurrency for the async worker Lambda."
+  description = "Optional reserved concurrency for the async worker Lambda. Null leaves concurrency in the account-level unreserved pool."
   type        = number
-  default     = 2
+  default     = null
+  nullable    = true
 }
 
 variable "monthly_budget_limit_usd" {
@@ -99,4 +100,3 @@ variable "force_destroy_buckets" {
   type        = bool
   default     = false
 }
-

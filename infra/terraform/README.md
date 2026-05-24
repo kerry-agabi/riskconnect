@@ -1,8 +1,10 @@
 # Terraform Layout
 
+Active stack name: `mrisk`.
+
 ## Roots
 
-- `bootstrap/`: one-time local bootstrap for the HCP Terraform AWS OIDC provider and run role.
+- `bootstrap/`: one-time local bootstrap for the HCP Terraform AWS OIDC provider and `mrisk` run role.
 - `dev/`: active dev environment using HCP Terraform remote execution.
 
 ## Dev Modules

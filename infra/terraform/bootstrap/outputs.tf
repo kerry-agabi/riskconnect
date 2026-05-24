@@ -4,7 +4,7 @@ output "tfc_oidc_provider_arn" {
 }
 
 output "tfc_run_role_arn" {
-  description = "Set this as TFC_AWS_RUN_ROLE_ARN in the riskconnect-dev HCP Terraform workspace."
+  description = "Set this as TFC_AWS_RUN_ROLE_ARN in the riskconnect-dev HCP Terraform workspace. For stack mrisk this is the mrisk-dev-tfc-deploy role."
   value       = aws_iam_role.tfc_deploy.arn
 }
 
@@ -12,4 +12,3 @@ output "tfc_subject_condition" {
   description = "Workload identity subject allowed to assume the HCP Terraform role."
   value       = local.tfc_subject
 }
-

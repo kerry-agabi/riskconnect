@@ -9,10 +9,11 @@ The design is intentionally serverless-first for a small AWS credit budget. Fron
 - `docs/` - product, architecture, data, API, GenAI, security, DevOps, cost, and delivery documentation.
 - `frontend/` - React application scaffold and delivery notes.
 - `backend/` - Python backend scaffold for Lambda/API handlers and async workers.
-- `infra/cdk/` - AWS CDK infrastructure scaffold.
+- `infra/terraform/` - active Terraform/HCP Terraform infrastructure for stack `mrisk`.
+- `infra/cdk/` - legacy AWS CDK scaffold retained for reference only.
 - `infra/k8s/` - optional local Kubernetes manifests for portability demos.
-- `.github/workflows/ci.yml` - CI skeleton for tests, Docker builds, and CDK synth.
+- `.github/workflows/ci.yml` - CI for tests, Docker builds, Lambda packaging, and Terraform validation.
+- `.github/workflows/deploy-dev.yml` - manual dev deploy workflow for stack `mrisk`.
 - `docker-compose.yml` - local development topology.
 
 Start with [docs/README.md](docs/README.md).
-

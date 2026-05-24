@@ -19,10 +19,9 @@ Hard constraints:
 
 - Prefer GitHub OIDC over long-lived AWS keys.
 - Do not ask users to commit secrets.
-- CI must validate frontend build, backend lint/tests, Docker builds, and CDK synth.
+- CI must validate frontend build, backend lint/tests, Docker builds, Lambda packaging, and Terraform format/validation.
 - Deploy workflows must be manual for MVP.
 - Main branch should be protected before serious development.
 - Require explicit user approval before pushing, deploying, or triggering cloud workflows.
 
-Before finishing, validate workflow YAML structure where possible and list required repository variables/secrets.
-
+Before finishing, validate workflow YAML structure where possible and list required repository variables/secrets, including `STACK_NAME=mrisk`, `AWS_REGION`, and `TFC_API_TOKEN`.

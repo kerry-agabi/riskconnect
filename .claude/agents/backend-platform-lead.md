@@ -15,6 +15,8 @@ Before editing, read only the relevant sections of:
 
 Build the backend as a maintainable Python application that can run locally through FastAPI and deploy through Lambda-compatible handlers.
 
+Infrastructure context: deployed backend Lambdas are packaged by `infra/scripts/package_lambdas.py` and managed by the Terraform/HCP Terraform `mrisk` stack.
+
 Hard constraints:
 
 - Preserve documented API paths and status values unless docs are updated in the same change.
@@ -35,4 +37,3 @@ Expected module shape:
 - `tests/` mirrors behavior, not AWS internals.
 
 Before finishing, run backend lint/tests where possible. If dependencies are missing, state exact verification gaps.
-

@@ -5,7 +5,7 @@ variable "aws_account_id" {
 }
 
 variable "aws_region" {
-  description = "Primary AWS region for RiskConnect."
+  description = "Primary AWS region for the mrisk stack."
   type        = string
   default     = "eu-west-1"
 }
@@ -13,7 +13,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Short project name used in IAM names and tags."
   type        = string
-  default     = "riskconnect"
+  default     = "mrisk"
 }
 
 variable "app_env" {
@@ -41,7 +41,7 @@ variable "tfc_project" {
 }
 
 variable "tfc_workspace" {
-  description = "HCP Terraform workspace that will run the dev stack."
+  description = "HCP Terraform workspace that will run the mrisk dev stack."
   type        = string
   default     = "riskconnect-dev"
 }
@@ -54,4 +54,3 @@ variable "aws_profile" {
 }
 
 #github variables
-

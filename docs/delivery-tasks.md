@@ -4,7 +4,7 @@
 
 - [x] Create React frontend scaffold.
 - [x] Create Python backend scaffold.
-- [x] Create CDK app scaffold.
+- [x] Create legacy CDK app scaffold.
 - [x] Add Dockerfiles and Docker Compose.
 - [x] Add GitHub Actions CI.
 - [x] Add lint/test commands for frontend and backend.
@@ -159,16 +159,18 @@ Acceptance:
 
 ## Phase 6: Infrastructure and CI
 
-- Implement CDK stacks.
+- Implement Terraform modules for stack `mrisk`.
+- Configure HCP Terraform remote execution.
 - Add budget alerts.
 - Add CloudWatch alarms.
-- Add GitHub OIDC deploy role.
-- Add CI jobs for frontend, backend, Docker, and CDK synth.
+- Add HCP Terraform AWS workload identity role.
+- Add GitHub OIDC deploy role for frontend artifact upload.
+- Add CI jobs for frontend, backend, Docker, Lambda packaging, and Terraform validation.
 
 Acceptance:
 
 - CI passes on pull request.
-- CDK synth succeeds.
+- Terraform format/init/validate succeeds.
 - Manual dev deployment can be run from GitHub Actions.
 
 ## Phase 7: Demo Hardening
@@ -183,4 +185,3 @@ Acceptance:
 
 - End-to-end demo completes in under 10 minutes.
 - Backend processing is observable through logs and statuses.
-

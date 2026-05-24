@@ -48,7 +48,7 @@ Use a synthetic property submission PDF for a US business location. The broker u
 - Risk enrichment works for a US address that resolves to county/FIPS.
 - GenAI summary is structured, reviewable, and cites internal evidence fields.
 - Infrastructure can deploy within a low AWS credit budget.
-- CI validates frontend, backend, Docker, and CDK synthesis.
+- CI validates frontend, backend, Docker, Lambda packaging, and Terraform configuration for the `mrisk` stack.
 
 ## What This MVP Is Not
 

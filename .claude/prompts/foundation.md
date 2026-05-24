@@ -13,7 +13,7 @@ Deliver:
 - Minimal file/folder changes needed for the phase.
 - Consistent scripts and config names.
 - CI-compatible checks.
+- Preserve Terraform/HCP Terraform `mrisk` stack conventions.
 - Brief summary of verification.
 
 Do not implement business logic outside the selected slice.
-

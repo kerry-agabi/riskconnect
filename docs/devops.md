@@ -13,12 +13,13 @@ Use `.github/workflows/ci.yml` for:
 - Frontend install, lint, test, and build.
 - Backend install, lint, type check, and unit tests.
 - Docker image build checks.
-- CDK synth.
+- Lambda artifact packaging.
+- Terraform format/init/validate checks for `infra/terraform/dev` and `infra/terraform/bootstrap`.
 
-Use a separate manual deploy workflow later:
+Use `.github/workflows/deploy-dev.yml` for the manual dev deploy:
 
-- Authenticate to AWS using GitHub OIDC.
-- Deploy CDK stacks.
+- Run Terraform CLI against HCP Terraform for stack `mrisk`.
+- Let HCP Terraform assume the AWS run role through workload identity.
 - Upload frontend build to S3.
 - Invalidate CloudFront.
 
@@ -56,6 +57,16 @@ Dockerfiles are included for:
 
 Production AWS runtime should use Lambda packages or container images only if dependency size requires it.
 
+## Active Infrastructure
+
+- Stack name: `mrisk`.
+- Terraform root: `infra/terraform/dev`.
+- HCP Terraform organization: `ka-risklens-mm`.
+- HCP Terraform workspace: `riskconnect-dev`.
+- AWS region: `eu-west-1`.
+
+The CDK scaffold under `infra/cdk/` is legacy reference only.
+
 ## Kubernetes
 
 Kubernetes is included as an optional portability exercise under `infra/k8s/`.
@@ -75,4 +86,3 @@ MVP environments:
 - `dev`: AWS serverless deployment for demos.
 
 Do not create `staging` or `prod` until the MVP proves value.
-

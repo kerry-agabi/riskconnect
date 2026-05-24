@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "github_assume_role" {
 
 resource "aws_iam_role" "github_deploy" {
   name               = "${var.name_prefix}-github-deploy"
-  description        = "GitHub Actions role for RiskConnect app artifact deployment."
+  description        = "GitHub Actions role for mrisk app artifact deployment."
   assume_role_policy = data.aws_iam_policy_document.github_assume_role.json
   tags               = var.tags
 }
@@ -109,4 +109,3 @@ resource "aws_iam_role_policy" "github_deploy" {
   role   = aws_iam_role.github_deploy.id
   policy = data.aws_iam_policy_document.github_deploy.json
 }
-

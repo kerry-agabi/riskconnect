@@ -2,7 +2,7 @@ locals {
   name_prefix = "${var.project_name}-${var.app_env}"
 
   tags = {
-    Project     = "RiskConnect"
+    Project     = "mrisk"
     Environment = var.app_env
     Owner       = var.owner
     CostCenter  = "LearningMVP"
@@ -61,14 +61,14 @@ data "aws_iam_policy_document" "tfc_assume_role" {
 
 resource "aws_iam_role" "tfc_deploy" {
   name               = "${local.name_prefix}-tfc-deploy"
-  description        = "HCP Terraform deploy role for the RiskConnect dev workspace."
+  description        = "HCP Terraform deploy role for the mrisk dev stack."
   assume_role_policy = data.aws_iam_policy_document.tfc_assume_role.json
   tags               = local.tags
 }
 
 data "aws_iam_policy_document" "tfc_deploy" {
   statement {
-    sid    = "ManageRiskConnectServerlessResources"
+    sid    = "ManageMriskServerlessResources"
     effect = "Allow"
 
     actions = [
@@ -121,7 +121,7 @@ data "aws_iam_policy_document" "tfc_deploy" {
   }
 
   statement {
-    sid    = "ManageRiskConnectIam"
+    sid    = "ManageMriskIam"
     effect = "Allow"
 
     actions = [

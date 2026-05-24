@@ -3,6 +3,9 @@ name: deploy-dev
 on:
   workflow_dispatch:
 
+env:
+  STACK_NAME: ${{ vars.STACK_NAME || 'mrisk' }}
+
 permissions:
   contents: read
   id-token: write
@@ -41,7 +44,7 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Terraform apply
-        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false -var="project_name=${STACK_NAME}"
         working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Read Terraform outputs

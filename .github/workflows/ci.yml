@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  STACK_NAME: ${{ vars.STACK_NAME || 'mrisk' }}
+
 jobs:
   frontend:
     runs-on: ubuntu-latest
@@ -46,8 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t riskconnect-frontend:ci frontend
-      - run: docker build -t riskconnect-backend:ci backend
+      - run: docker build -t ${{ env.STACK_NAME }}-frontend:ci frontend
+      - run: docker build -t ${{ env.STACK_NAME }}-backend:ci backend
 
   terraform:
     runs-on: ubuntu-latest

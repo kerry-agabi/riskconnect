@@ -21,8 +21,8 @@ Then execute these prompts in order, one slice per session:
 7. `/mvp-backend Implement the SQS worker orchestration backbone with explicit status transitions: QUEUED, OCR_RUNNING, EXTRACTING, ENRICHING, GENERATING_SUMMARY, READY, NEEDS_REVIEW, FAILED. Use injectable fake services first. Add tests for happy path, retryable failure, and missing address review.`
 8. `Use the data-enrichment-lead subagent. Implement the public-data enrichment slice using tiny fixtures only: Census geocode abstraction, county FIPS hazard lookup, source provenance, and NEEDS_REVIEW fallback for missing geocode/hazard data. Do not download full FEMA/NOAA datasets yet.`
 9. `Use the genai-workflow-lead subagent. Implement Bedrock prompt modules, JSON schemas, schema validation, one repair retry, and fake Bedrock tests for structured extraction and AI risk brief generation. Enforce no bind/decline/pricing advice and no invented facts.`
-10. `/mvp-infra Implement CDK stacks for dev: web hosting, API, processing queue/DLQ, DynamoDB tables, S3 buckets, Lambda placeholders, log retention, tags, and budget alarms. Do not deploy. Run cdk synth only if dependencies are available.`
-11. `Use the devops-release-lead subagent. Add a manual dev deploy workflow using GitHub OIDC and docs/github-cicd-setup.md. Keep CI separate from deploy. Do not add static AWS keys. Document required repo variables.`
+10. `/mvp-infra Implement Terraform modules for dev: web hosting, API, processing queue/DLQ, DynamoDB tables, S3 buckets, Lambda placeholders, log retention, tags, budget alarms, and stack prefix mrisk. Do not apply. Run terraform fmt/init/validate only.`
+11. `Use the devops-release-lead subagent. Maintain the manual dev deploy workflow using HCP Terraform plus GitHub OIDC for frontend assets. Keep CI separate from deploy. Do not add static AWS keys. Document required repo variables/secrets.`
 12. `/mvp-next demo hardening`
 13. `Use frontend-ui-lead, backend-platform-lead, and qa-security-reviewer as needed. Add synthetic sample data, demo instructions, error-state polish, and a local end-to-end path that does not require live AWS unless explicitly configured.`
 14. `/mvp-review entire MVP implementation`
@@ -34,4 +34,3 @@ After each slice:
 ```
 
 Each slice must report files changed, checks run, checks not run, residual risks, and the next recommended prompt.
-

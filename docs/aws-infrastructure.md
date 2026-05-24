@@ -1,86 +1,75 @@
 # AWS Infrastructure
 
-## CDK Stack Overview
+## Active Terraform Stack
 
-Use AWS CDK in Python under `infra/cdk/`.
+The active AWS infrastructure is Terraform under `infra/terraform`.
 
-Stacks:
+- Stack name: `mrisk`
+- Dev resource prefix: `mrisk-dev`
+- Terraform dev root: `infra/terraform/dev`
+- Terraform bootstrap root: `infra/terraform/bootstrap`
+- HCP Terraform organization: `ka-risklens-mm`
+- HCP Terraform workspace: `riskconnect-dev`
+- AWS account: `178002661103`
+- AWS region: `eu-west-1`
 
-- `RiskLensWebStack`: S3 static website bucket, CloudFront distribution, deployment role.
-- `RiskLensApiStack`: API Gateway HTTP API, API Lambda, Cognito authorizer.
-- `RiskLensProcessingStack`: S3 submissions bucket, SQS queue, DLQ, worker Lambda, Textract/Bedrock permissions.
-- `RiskLensDataStack`: DynamoDB tables and S3 public data cache bucket.
-- `RiskLensObservabilityStack`: CloudWatch alarms, dashboard, AWS Budgets notifications.
+The CDK scaffold under `infra/cdk/` is retained only as legacy reference.
+
+## Deployment Model
+
+GitHub Actions packages Lambda artifacts and runs Terraform CLI against HCP Terraform. HCP Terraform performs the remote plan/apply and assumes the AWS run role using workload identity.
+
+After Terraform creates the web bucket and CloudFront distribution, GitHub Actions assumes the separate GitHub OIDC deploy role to upload frontend assets and create a CloudFront invalidation.
+
+No AWS access keys should be stored in GitHub.
+
+## Terraform Roots And Modules
+
+- `infra/terraform/bootstrap`: one-time local bootstrap for the HCP Terraform AWS OIDC provider and run role.
+- `infra/terraform/dev`: active dev environment using HCP Terraform remote execution.
+- `infra/terraform/dev/modules/api`: API Gateway HTTP API and API Lambda.
+- `infra/terraform/dev/modules/processing`: submissions bucket, SQS queue, DLQ, and worker Lambda.
+- `infra/terraform/dev/modules/data`: DynamoDB metadata and hazard tables.
+- `infra/terraform/dev/modules/web`: private S3 frontend hosting behind CloudFront OAC.
+- `infra/terraform/dev/modules/github_deploy`: GitHub Actions OIDC role for frontend artifact deployment.
+- `infra/terraform/dev/modules/observability`: budget and CloudWatch alarms.
+
+The dev root keeps modules under `dev/modules/` so HCP Terraform receives them in the uploaded remote-run configuration bundle.
 
 ## AWS Services
 
 | Service | Purpose | Budget Notes |
 | --- | --- | --- |
-| S3 | Static app, raw submissions, results, public data cache | Low cost for MVP volumes. |
+| S3 | Static app, raw submissions, results | Low cost for MVP volumes. |
 | CloudFront | Fast frontend delivery | Free tier friendly for low traffic. |
-| Cognito | Demo authentication | Avoid custom auth implementation. |
 | API Gateway HTTP API | Low-latency API | Cheaper than REST API for MVP. |
 | Lambda | API handlers and async processing | Pay per request/duration. |
-| SQS | Decoupled processing queue | Very low cost. |
+| SQS | Decoupled processing queue and DLQ | Very low cost. |
 | DynamoDB on-demand | Status, metadata, hazard cache | No capacity planning. |
 | Textract | OCR for PDFs/images | Use page caps to control cost. |
-| Bedrock | GenAI extraction and summaries | Use Haiku/Nova-class model and token caps. |
+| Bedrock | GenAI extraction and summaries | Use low-cost models and token caps. |
 | CloudWatch | Logs, metrics, alarms | Set log retention to 14 days. |
 | AWS Budgets | Cost guardrail | Alert before credit exhaustion. |
 
+## Naming And Tags
+
+- Stack name: `mrisk`.
+- Dev resource prefix: `mrisk-dev`.
+- Resource names should follow `mrisk-{env}-{purpose}` when possible.
+- Required tags: `Project=mrisk`, `Environment`, `Owner`, `CostCenter=LearningMVP`, `ManagedBy=Terraform`.
+
+Existing HCP names intentionally remain `ka-risklens-mm` / `riskconnect-dev`.
+
 ## IAM Principles
 
+- HCP Terraform assumes `mrisk-dev-tfc-deploy` for Terraform-managed AWS changes.
+- GitHub Actions assumes `mrisk-dev-github-deploy` only after Terraform apply, for frontend S3 sync and CloudFront invalidation.
 - API Lambda can create presigned URLs only for the submissions prefix.
 - Worker Lambda can read raw submission objects and write result artifacts.
 - Worker Lambda can call Textract and Bedrock only for required actions.
-- No wildcard admin policies.
-- Separate deploy role for GitHub Actions using OIDC.
+- Avoid wildcard admin policies; scope permissions to required resource ARNs where feasible.
 
-## DynamoDB Tables
-
-### `RiskLensSubmissions`
-
-Partition key: `pk`
-
-Sort key: `sk`
-
-Records:
-
-- `pk=SUBMISSION#{id}`, `sk=METADATA`
-- `pk=SUBMISSION#{id}`, `sk=EVENT#{timestamp}`
-
-Global secondary index:
-
-- `gsi1pk=USER#{userId}`
-- `gsi1sk={createdAt}`
-
-### `RiskLensHazards`
-
-Partition key: `pk`
-
-Sort key: `sk`
-
-Records:
-
-- `pk=COUNTY#{fips}`, `sk=HAZARD_SUMMARY#latest`
-- `pk=COUNTY#{fips}`, `sk=SOURCE_VERSION#{sourceName}`
-
-## S3 Buckets
-
-- `risklens-web-{account}-{region}`: frontend build artifacts.
-- `risklens-submissions-{account}-{region}`: raw uploads and generated outputs.
-- `risklens-data-cache-{account}-{region}`: public data snapshots.
-
-Use encryption at rest, block public access, and lifecycle expiration for temporary artifacts.
-
-## SQS
-
-- Main queue: `risklens-processing`
-- DLQ: `risklens-processing-dlq`
-- Visibility timeout: at least 6x worker Lambda timeout.
-- Max receive count: `3`.
-
-## Lambda Settings
+## Runtime Settings
 
 API Lambda:
 
@@ -91,15 +80,24 @@ API Lambda:
 Worker Lambda:
 
 - Runtime: Python 3.12
-- Timeout: 5-10 minutes
-- Memory: 1024-2048 MB depending on PDF parsing library needs
-- Reserved concurrency: low single digits for cost control
+- Timeout: 300 seconds
+- Memory: 1024 MB
+- Reserved concurrency: unset by default; set a low value only when the AWS account has enough unreserved concurrency headroom
 
-## Budget Alarms
+Lambda environment variables must not include AWS-reserved keys such as `AWS_REGION`; Lambda provides those automatically.
 
-Create AWS Budgets alerts at:
+## Validation
 
-- `$100`: early warning
-- `$175`: reduce test volume
-- `$225`: stop nonessential processing
+Use these checks before opening or merging infrastructure changes:
 
+```powershell
+terraform fmt -check -recursive infra/terraform
+cd infra/terraform/dev
+terraform init -backend=false -input=false
+terraform validate -no-color
+cd ../bootstrap
+terraform init -backend=false -input=false
+terraform validate -no-color
+```
+
+Do not run `terraform apply`, `terraform destroy`, or the `deploy-dev` workflow without explicit approval.

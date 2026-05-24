@@ -13,7 +13,7 @@ Confirm these files exist:
 - `.claude/commands/*.md`
 - `docs/delivery-tasks.md`
 
-Do not run live AWS deploy commands until local checks, CDK synth, budget alarms, and GitHub OIDC are ready.
+Do not run live AWS deploy commands until local checks, Terraform validation, budget alarms, HCP Terraform workload identity, and GitHub OIDC are ready.
 
 ## Startup Prompt
 
@@ -93,10 +93,10 @@ Use the genai-workflow-lead subagent.
 Implement Bedrock prompt modules, JSON schemas, schema validation, one repair retry, and fake Bedrock tests for structured extraction and AI risk brief generation. Enforce no bind/decline/pricing advice and no invented facts.
 ```
 
-### 9. CDK Infrastructure
+### 9. Terraform Infrastructure
 
 ```text
-/mvp-infra Implement CDK stacks for dev: web hosting, API, processing queue/DLQ, DynamoDB tables, S3 buckets, Lambda placeholders, log retention, tags, and budget alarms. Do not deploy. Run cdk synth only if dependencies are available.
+/mvp-infra Implement Terraform modules for dev stack mrisk: web hosting, API, processing queue/DLQ, DynamoDB tables, S3 buckets, Lambda placeholders, log retention, tags, and budget alarms. Do not apply. Run terraform fmt/init/validate only.
 ```
 
 ### 10. GitHub Actions Deploy Workflow
@@ -104,7 +104,7 @@ Implement Bedrock prompt modules, JSON schemas, schema validation, one repair re
 ```text
 Use the devops-release-lead subagent.
 
-Add a manual dev deploy workflow using GitHub OIDC and docs/github-cicd-setup.md. Keep CI separate from deploy. Do not add static AWS keys. Document required repo variables.
+Maintain the manual dev deploy workflow using HCP Terraform for apply and GitHub OIDC for frontend artifact deployment. Keep CI separate from deploy. Do not add static AWS keys. Document required repo variables/secrets, including STACK_NAME=mrisk.
 ```
 
 ### 11. End-To-End Demo Hardening
@@ -154,4 +154,3 @@ Each slice must end with:
 - Checks not run and why.
 - Residual risks.
 - Next recommended prompt.
-

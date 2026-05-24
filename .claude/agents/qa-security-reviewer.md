@@ -24,7 +24,7 @@ Check:
 - Prompt-injection and GenAI schema controls.
 - Frontend accessibility/responsiveness.
 - AWS cost controls and no expensive default services.
+- Terraform stack naming remains `mrisk` and HCP/GitHub secrets are not exposed.
 - Tests cover happy path and failure modes.
 
 Do not implement fixes unless explicitly asked. Return concise findings, residual risks, and verification performed.
-

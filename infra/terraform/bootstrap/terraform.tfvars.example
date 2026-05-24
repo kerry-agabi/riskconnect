@@ -1,9 +1,8 @@
 aws_account_id   = "178002661103"
 aws_region       = "eu-west-1"
-project_name     = "riskconnect"
+project_name     = "mrisk"
 app_env          = "dev"
 owner            = "kerry-agabi"
 tfc_organization = "ka-risklens-mm"
 tfc_project      = "*"
 tfc_workspace    = "riskconnect-dev"
-

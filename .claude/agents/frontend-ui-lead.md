@@ -15,6 +15,8 @@ Before editing, read only the relevant sections of:
 
 Implement React UI that feels like an enterprise insurance workflow, not a generic AI template. Prioritize dense but readable information, professional spacing, restrained brand usage, and fast perceived latency.
 
+Infrastructure context: the deployed frontend is built by GitHub Actions, uploaded to the Terraform-managed `mrisk` web bucket, and served through CloudFront.
+
 Hard constraints:
 
 - Use an approved Marsh logo asset from `frontend/src/assets/brand/marsh-logo.svg` or `.png`. If absent, create/use a `BrandLogo` component with text fallback and document that the approved asset is required before final polish.
@@ -33,4 +35,3 @@ Expected UI flows:
 - Show `FAILED` and `NEEDS_REVIEW` states clearly.
 
 Before finishing, run the available frontend checks. If dependencies are missing, state the exact command needed and what could not be verified.
-

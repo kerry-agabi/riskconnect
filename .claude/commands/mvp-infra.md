@@ -14,5 +14,4 @@ Required context:
 - `docs/github-cicd-setup.md`
 - `.claude/skills/risklens-aws-standard.md`
 
-Do not deploy or mutate live AWS resources without explicit user confirmation. Prefer `cdk synth` and static validation.
-
+Do not deploy or mutate live AWS resources without explicit user confirmation. Prefer Terraform format/init/validate checks and static validation.

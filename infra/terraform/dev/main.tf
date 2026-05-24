@@ -2,7 +2,7 @@ locals {
   name_prefix = "${var.project_name}-${var.app_env}"
 
   tags = {
-    Project     = "RiskConnect"
+    Project     = "mrisk"
     Environment = var.app_env
     Owner       = var.owner
     CostCenter  = "LearningMVP"
