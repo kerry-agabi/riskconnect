@@ -48,6 +48,15 @@ The bootstrap root defaults the HCP Terraform trust subject to `organization:ka-
 
 The current unblock path reuses the old `riskconnect-dev-tfc-deploy` role while keeping the application stack name `mrisk`. Run bootstrap with `terraform apply -var="project_name=riskconnect"`, then set `TFC_AWS_RUN_ROLE_ARN` to the old role ARN above.
 
+If HCP Terraform assumes `riskconnect-dev-tfc-deploy` but still receives IAM denies for `mrisk-dev-*` roles, the live old-role policy is stale. From `infra/terraform/bootstrap`, apply the emergency inline policy:
+
+```powershell
+aws iam put-role-policy `
+  --role-name riskconnect-dev-tfc-deploy `
+  --policy-name riskconnect-dev-tfc-deploy `
+  --policy-document file://riskconnect-dev-tfc-deploy-policy.json
+```
+
 The preferred final role after the migration is `arn:aws:iam::178002661103:role/mrisk-dev-tfc-deploy`, but do not switch to it until the bootstrap trust policy has been verified with HCP Terraform.
 
 If the deploy log shows `No valid credential sources found` and `AccessDenied: Not authorized to perform sts:AssumeRoleWithWebIdentity`, the AWS role trust policy does not match the HCP Terraform token. Rerun bootstrap and confirm its `tfc_subject_condition` output matches `organization:ka-risklens-mm:project:*:workspace:riskconnect-dev:run_phase:*` or the exact HCP project name you configured.

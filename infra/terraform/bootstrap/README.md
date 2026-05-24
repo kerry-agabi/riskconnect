@@ -30,6 +30,17 @@ arn:aws:iam::178002661103:role/riskconnect-dev-tfc-deploy
 
 The default IAM prefix allowlist includes both `riskconnect-dev` and `mrisk-dev`, so the old run role can clean up old resources and manage the new `mrisk` IAM resources.
 
+If bootstrap does not update the live old role policy, apply the checked-in emergency inline policy with an admin-capable AWS session:
+
+```powershell
+aws iam put-role-policy `
+  --role-name riskconnect-dev-tfc-deploy `
+  --policy-name riskconnect-dev-tfc-deploy `
+  --policy-document file://riskconnect-dev-tfc-deploy-policy.json
+```
+
+This policy is the same compatibility scope as the Terraform bootstrap policy: it lets the old HCP Terraform run role clean up `riskconnect-dev-*` IAM resources and create/manage `mrisk-dev-*` IAM resources.
+
 The default HCP Terraform trust subject is `organization:ka-risklens-mm:project:*:workspace:riskconnect-dev:run_phase:*`. If you know the exact HCP Terraform project name, set `tfc_project` to that value; otherwise keep `*` so the role trust policy matches the existing workspace even if it is not in a project named `riskconnect`.
 
 If HCP Terraform logs show it assuming `riskconnect-dev-tfc-deploy`, that is expected while using the old-role fallback. If you later move to the final `mrisk-dev-tfc-deploy` role, rerun bootstrap with the default `project_name=mrisk`, then update `TFC_AWS_RUN_ROLE_ARN` to the new output before rerunning `deploy-dev`.
