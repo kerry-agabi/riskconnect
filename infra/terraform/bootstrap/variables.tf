@@ -53,3 +53,5 @@ variable "aws_profile" {
   default     = "kerry-agabi"
 }
 
+#github variables
+
