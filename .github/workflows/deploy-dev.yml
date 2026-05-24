@@ -10,7 +10,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev
+    environment:
+      name: dev
     env:
       AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
       TF_WORKING_DIR: infra/terraform/dev
@@ -72,5 +73,5 @@ jobs:
           --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID"
 
       - name: Deployment summary
-        run: echo "Frontend URL: $FRONTEND_URL" >> "$GITHUB_STEP_SUMMARY"
-
+        run: |
+          echo "Frontend URL: $FRONTEND_URL" >> "$GITHUB_STEP_SUMMARY"
