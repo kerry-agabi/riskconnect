@@ -102,16 +102,16 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      AWS_REGION           = var.aws_region
-      DYNAMODB_TABLE       = var.submissions_table_name
-      HAZARDS_TABLE        = var.hazards_table_name
-      LOG_LEVEL            = "INFO"
-      S3_BUCKET            = var.submissions_bucket_name
-      SQS_QUEUE_URL        = var.processing_queue_url
-      SUBMISSIONS_BUCKET   = var.submissions_bucket_name
-      SUBMISSIONS_TABLE    = var.submissions_table_name
+      AWS_REGION            = var.aws_region
+      DYNAMODB_TABLE        = var.submissions_table_name
+      HAZARDS_TABLE         = var.hazards_table_name
+      LOG_LEVEL             = "INFO"
+      S3_BUCKET             = var.submissions_bucket_name
+      SQS_QUEUE_URL         = var.processing_queue_url
+      SUBMISSIONS_BUCKET    = var.submissions_bucket_name
+      SUBMISSIONS_TABLE     = var.submissions_table_name
       UPLOAD_EXPIRY_SECONDS = "900"
-      MAX_FILE_SIZE_BYTES  = "10000000"
+      MAX_FILE_SIZE_BYTES   = "10000000"
     }
   }
 

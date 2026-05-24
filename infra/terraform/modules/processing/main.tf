@@ -195,6 +195,6 @@ resource "aws_lambda_function" "worker" {
 resource "aws_lambda_event_source_mapping" "processing" {
   event_source_arn = aws_sqs_queue.processing.arn
   function_name    = aws_lambda_function.worker.arn
-  batch_size        = 1
-  enabled           = true
+  batch_size       = 1
+  enabled          = true
 }

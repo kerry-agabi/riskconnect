@@ -1,9 +1,9 @@
 locals {
-  cache_policy_caching_disabled        = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-  cache_policy_caching_optimized       = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-  origin_request_all_except_host       = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
-  origin_id_api                        = "${var.name_prefix}-api"
-  origin_id_web                        = "${var.name_prefix}-web"
+  cache_policy_caching_disabled  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+  cache_policy_caching_optimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+  origin_request_all_except_host = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+  origin_id_api                  = "${var.name_prefix}-api"
+  origin_id_web                  = "${var.name_prefix}-web"
 }
 
 resource "aws_s3_bucket" "web" {

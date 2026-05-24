@@ -46,6 +46,7 @@ class Settings(BaseModel):
 def get_settings() -> Settings:
     """Load settings from environment. In tests, override via FastAPI dependency injection."""
     return Settings(
+        app_name=os.environ.get("APP_NAME", "RiskLens API"),
         s3_bucket=os.environ.get("S3_BUCKET", "risklens-submissions-dev"),
         sqs_queue_url=os.environ.get("SQS_QUEUE_URL", ""),
         aws_region=os.environ.get("AWS_REGION", "us-east-1"),

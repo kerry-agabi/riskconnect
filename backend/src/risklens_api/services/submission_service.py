@@ -194,6 +194,8 @@ class SubmissionService:
         return SummaryResponse(
             submission_id=record.submission_id,
             status=record.status,
+            extracted=None,
+            hazards=None,
         )
 
     def list_submissions(
