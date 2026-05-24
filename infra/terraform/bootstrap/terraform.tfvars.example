@@ -4,6 +4,7 @@ project_name     = "mrisk"
 app_env          = "dev"
 legacy_iam_name_prefixes = [
   "riskconnect-dev",
+  "mrisk-dev",
 ]
 owner            = "kerry-agabi"
 tfc_organization = "ka-risklens-mm"

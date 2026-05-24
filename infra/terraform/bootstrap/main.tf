@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "tfc_assume_role" {
 
 resource "aws_iam_role" "tfc_deploy" {
   name               = "${local.name_prefix}-tfc-deploy"
-  description        = "HCP Terraform deploy role for the mrisk dev stack."
+  description        = "HCP Terraform deploy role for the dev stack."
   assume_role_policy = data.aws_iam_policy_document.tfc_assume_role.json
   tags               = local.tags
 }
