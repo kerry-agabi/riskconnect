@@ -153,7 +153,7 @@ def test_bedrock_json_parser_accepts_fenced_json() -> None:
 
     result = aws_runtime._invoke_bedrock_json(  # noqa: SLF001
         client,
-        "anthropic.claude-3-haiku-20240307-v1:0",
+        "eu.anthropic.claude-sonnet-4-6",
         "Return JSON",
         200,
     )
@@ -169,7 +169,7 @@ def test_bedrock_json_repair_prompt_includes_invalid_response() -> None:
 
     result = aws_runtime._invoke_bedrock_json(  # noqa: SLF001
         client,
-        "anthropic.claude-3-haiku-20240307-v1:0",
+        "eu.anthropic.claude-sonnet-4-6",
         "Return JSON",
         200,
     )

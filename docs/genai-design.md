@@ -4,8 +4,8 @@
 
 Use Amazon Bedrock with a low-cost, low-latency model first:
 
-- Preferred MVP: Anthropic Claude 3 Haiku (`anthropic.claude-3-haiku-20240307-v1:0`) for direct on-demand invocation in `eu-west-1`.
-- If upgrading to a newer Sonnet model, use the Bedrock inference profile ID or ARN required by AWS instead of a direct model ID.
+- Preferred MVP: Anthropic Claude Sonnet 4.6 through the EU inference profile (`eu.anthropic.claude-sonnet-4-6`) from `eu-west-1`.
+- Newer Sonnet models require the Bedrock inference profile ID or ARN instead of the direct base model ID.
 - Fallback: Amazon Nova Micro/Lite if account access or cost is better.
 - Avoid larger models for default processing unless a submission is manually escalated.
 
