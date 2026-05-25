@@ -11,6 +11,31 @@ locals {
 
   api_lambda_package_path    = abspath("${path.module}/${var.api_lambda_package_path}")
   worker_lambda_package_path = abspath("${path.module}/${var.worker_lambda_package_path}")
+
+  # CloudFront base URL is derived from the web module so a single normal
+  # `terraform apply` always registers the live frontend origin as a Cognito
+  # callback/logout URL. No second apply is required.
+  cloudfront_base_url = "https://${module.web.cloudfront_domain_name}"
+
+  # Register both trailing-slash variants. The frontend redirect_uri can be
+  # `origin + pathname` (slash) or the no-slash `frontend_url` baked into the
+  # build, and Cognito requires a byte-exact match.
+  cloudfront_auth_urls = [
+    local.cloudfront_base_url,
+    "${local.cloudfront_base_url}/",
+  ]
+
+  # Normalize the override URLs (localhost dev, etc.) so both slash variants are
+  # accepted too. Vite dev serves at `/`, while the baked env may omit it.
+  cognito_callback_urls_normalized = distinct(concat(
+    local.cloudfront_auth_urls,
+    flatten([for u in var.cognito_callback_urls : [trimsuffix(u, "/"), "${trimsuffix(u, "/")}/"]]),
+  ))
+
+  cognito_logout_urls_normalized = distinct(concat(
+    local.cloudfront_auth_urls,
+    flatten([for u in var.cognito_logout_urls : [trimsuffix(u, "/"), "${trimsuffix(u, "/")}/"]]),
+  ))
 }
 
 module "data" {
@@ -56,8 +81,8 @@ module "api" {
   hazards_table_arn      = module.data.hazards_table_arn
   hazards_table_name     = module.data.hazards_table_name
 
-  cognito_callback_urls = var.cognito_callback_urls
-  cognito_logout_urls   = var.cognito_logout_urls
+  cognito_callback_urls = local.cognito_callback_urls_normalized
+  cognito_logout_urls   = local.cognito_logout_urls_normalized
 
   tags = local.tags
 }

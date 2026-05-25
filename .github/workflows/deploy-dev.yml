@@ -61,14 +61,9 @@ jobs:
           } >> "$GITHUB_ENV"
         working-directory: ${{ env.TF_WORKING_DIR }}
 
-      - name: Terraform apply frontend callback URLs
-        shell: bash
-        run: >
-          terraform apply -auto-approve -input=false
-          -var="project_name=${TERRAFORM_PROJECT_NAME}"
-          -var="cognito_callback_urls=[\"${FRONTEND_URL}\",\"http://localhost:5173\"]"
-          -var="cognito_logout_urls=[\"${FRONTEND_URL}\",\"http://localhost:5173\"]"
-        working-directory: ${{ env.TF_WORKING_DIR }}
+      # The CloudFront callback/logout URLs are now derived inside Terraform
+      # (see infra/terraform/dev/main.tf locals.cloudfront_auth_urls), so the
+      # single apply above already registers them. No second apply is needed.
 
       - name: Export frontend auth env
         run: |
