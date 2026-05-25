@@ -25,6 +25,7 @@ from risklens_api.core.errors import (
     SubmissionNotFoundError,
     SummaryNotAvailableError,
 )
+from risklens_api.core.logging import get_logger
 from risklens_api.core.ids import generate_id
 from risklens_api.schemas.processing import (
     FieldExtractionResult,
@@ -516,6 +517,7 @@ class DynamoSummaryGenerationService:
         self._bedrock = boto3.client("bedrock-runtime", region_name=region_name)
         self._model_id = model_id
         self._max_output_tokens = max_output_tokens
+        self._logger = get_logger()
 
     def generate_summary(
         self,
@@ -533,16 +535,29 @@ class DynamoSummaryGenerationService:
             f"Extracted facts:\n{extracted.model_dump_json()}\n\n"
             f"Hazard context:\n{hazards.model_dump_json()}"
         )
-        data = _invoke_bedrock_json(
-            self._bedrock,
-            self._model_id,
-            prompt,
-            self._max_output_tokens,
-        )
         try:
+            data = _invoke_bedrock_json(
+                self._bedrock,
+                self._model_id,
+                prompt,
+                self._max_output_tokens,
+            )
             brief = AIBrief.model_validate(data)
-        except Exception as exc:
-            raise NonRetryableError("Bedrock brief returned invalid structured data") from exc
+        except NonRetryableError as exc:
+            if str(exc) != "Bedrock returned invalid JSON":
+                raise
+            self._logger.warning(
+                "Bedrock brief was not valid JSON; using deterministic fallback",
+                extra={"component": "summary_generation", "submission_id": submission_id},
+            )
+            brief = _build_fallback_brief(extracted, hazards)
+        except Exception:
+            self._logger.warning(
+                "Bedrock brief failed schema validation; using deterministic fallback",
+                extra={"component": "summary_generation", "submission_id": submission_id},
+                exc_info=True,
+            )
+            brief = _build_fallback_brief(extracted, hazards)
 
         self._table.put_item(
             Item={
@@ -558,6 +573,53 @@ class DynamoSummaryGenerationService:
                 "createdAt": _now(),
             }
         )
+
+
+def _build_fallback_brief(extracted: ExtractedData, hazards: HazardData) -> AIBrief:
+    """Build a deterministic brief when Bedrock returns malformed JSON.
+
+    This keeps a fully processed submission from failing after extraction and
+    enrichment have succeeded. It uses only structured facts already produced
+    by the pipeline and does not infer unsupported values from raw text.
+    """
+    insured = extracted.insured_name or "The insured"
+    address = extracted.address
+    location_parts = []
+    if address:
+        location_parts = [
+            part
+            for part in (
+                address.line1,
+                address.city,
+                address.state,
+                address.postal_code,
+            )
+            if part
+        ]
+    location = ", ".join(location_parts) if location_parts else "the submitted location"
+    industry = extracted.industry or "the submitted occupancy"
+    top_hazards = hazards.top_hazards[:3]
+    hazard_text = ", ".join(top_hazards) if top_hazards else "the available county hazards"
+    risk_rating = hazards.fema_risk_rating or "unrated"
+
+    return AIBrief(
+        executive_summary=(
+            f"{insured} is a commercial property submission for {industry} at "
+            f"{location}. The public hazard profile is {risk_rating}, with "
+            f"primary hazards including {hazard_text}. This fallback brief was "
+            "generated from structured extracted facts because the model response "
+            "was not valid JSON."
+        ),
+        risk_flags=[
+            f"County hazard profile: {risk_rating}.",
+            f"Top hazards: {hazard_text}.",
+        ],
+        questions_for_broker=[
+            "Confirm the extracted property address, occupancy, construction details, and requested limits.",
+            "Confirm whether any recent loss activity or hazard mitigation details should be added.",
+        ],
+        confidence="low",
+    )
 
 
 class CensusGeocodeService:

@@ -8,6 +8,12 @@ import pytest
 from botocore.exceptions import ClientError
 
 from risklens_api.core.errors import NonRetryableError
+from risklens_api.schemas.submissions import (
+    Address,
+    ExtractedData,
+    HazardData,
+    StormEventCounts,
+)
 from risklens_api.services import aws_runtime
 
 
@@ -73,6 +79,23 @@ class FakeBedrockClient:
                 ]
             })
         }
+
+
+class FakeDynamoTable:
+    def __init__(self) -> None:
+        self.items: list[dict[str, Any]] = []
+
+    def put_item(self, **kwargs: Any) -> dict[str, Any]:
+        self.items.append(kwargs["Item"])
+        return {}
+
+
+class FakeDynamoResource:
+    def __init__(self, table: FakeDynamoTable) -> None:
+        self.table = table
+
+    def Table(self, table_name: str) -> FakeDynamoTable:  # noqa: N802 - boto3 API
+        return self.table
 
 
 class FailingBedrockClient:
@@ -189,3 +212,61 @@ def test_bedrock_client_validation_error_surfaces_real_message() -> None:
             "Return JSON",
             200,
         )
+
+
+def test_summary_generation_falls_back_when_bedrock_returns_empty_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    table = FakeDynamoTable()
+    bedrock = FakeBedrockClient(["", ""])
+
+    monkeypatch.setattr(
+        aws_runtime.boto3,
+        "resource",
+        lambda service_name, **kwargs: FakeDynamoResource(table),
+    )
+    monkeypatch.setattr(
+        aws_runtime.boto3,
+        "client",
+        lambda service_name, **kwargs: bedrock,
+    )
+    service = aws_runtime.DynamoSummaryGenerationService(
+        table_name="submissions",
+        region_name="eu-west-1",
+        model_id="eu.anthropic.claude-sonnet-4-6",
+        max_output_tokens=500,
+    )
+
+    service.generate_summary(
+        "SUB-1",
+        ExtractedData(
+            insured_name="Veridian Light Manufacturing LLC",
+            address=Address(
+                line1="14350 Victory Blvd",
+                city="Los Angeles",
+                state="CA",
+                postal_code="91401",
+                county_fips="06037",
+            ),
+            industry="Light manufacturing",
+            requested_coverage="Commercial Property",
+        ),
+        HazardData(
+            fema_risk_rating="Relatively High",
+            top_hazards=["Earthquake", "Wildfire", "Riverine Flooding"],
+            recent_disaster_declarations=4,
+            storm_event_counts_10yr=StormEventCounts(
+                hail=16,
+                strong_wind=83,
+                flash_flood=21,
+            ),
+        ),
+    )
+
+    assert len(bedrock.requests) == 2
+    assert len(table.items) == 1
+    item = table.items[0]
+    assert item["pk"] == "SUBMISSION#SUB-1"
+    assert item["sk"] == "SUMMARY"
+    assert item["aiBrief"]["confidence"] == "low"
+    assert "model response was not valid JSON" in item["aiBrief"]["executiveSummary"]
