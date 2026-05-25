@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from risklens_api.core.constants import SubmissionStatus
 
@@ -203,15 +203,19 @@ class Address(BaseModel):
         None, description="Two-letter US state abbreviation."
     )
     postal_code: str | None = Field(
-        None, serialization_alias="postalCode", description="ZIP or postal code."
+        None,
+        validation_alias=AliasChoices("postal_code", "postalCode"),
+        serialization_alias="postalCode",
+        description="ZIP or postal code.",
     )
     county_fips: str | None = Field(
         None,
+        validation_alias=AliasChoices("county_fips", "countyFips"),
         serialization_alias="countyFips",
         description="5-digit county FIPS code used for hazard data lookups.",
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class Limits(BaseModel):
@@ -222,11 +226,14 @@ class Limits(BaseModel):
     )
     business_personal_property: int | None = Field(
         None,
+        validation_alias=AliasChoices(
+            "business_personal_property", "businessPersonalProperty"
+        ),
         serialization_alias="businessPersonalProperty",
         description="Business personal property coverage limit in USD.",
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class ExtractedData(BaseModel):
@@ -238,6 +245,7 @@ class ExtractedData(BaseModel):
 
     insured_name: str | None = Field(
         None,
+        validation_alias=AliasChoices("insured_name", "insuredName"),
         serialization_alias="insuredName",
         description="Name of the insured party or business.",
     )
@@ -249,6 +257,7 @@ class ExtractedData(BaseModel):
     )
     requested_coverage: str | None = Field(
         None,
+        validation_alias=AliasChoices("requested_coverage", "requestedCoverage"),
         serialization_alias="requestedCoverage",
         description="Type of insurance coverage requested (e.g. Commercial property).",
     )
@@ -257,11 +266,12 @@ class ExtractedData(BaseModel):
     )
     missing_fields: list[str] = Field(
         default_factory=list,
+        validation_alias=AliasChoices("missing_fields", "missingFields"),
         serialization_alias="missingFields",
         description="List of field names that could not be extracted from the document.",
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class StormEventCounts(BaseModel):
@@ -272,16 +282,18 @@ class StormEventCounts(BaseModel):
     )
     strong_wind: int = Field(
         0,
+        validation_alias=AliasChoices("strong_wind", "strongWind"),
         serialization_alias="strongWind",
         description="Number of strong wind events in the past 10 years.",
     )
     flash_flood: int = Field(
         0,
+        validation_alias=AliasChoices("flash_flood", "flashFlood"),
         serialization_alias="flashFlood",
         description="Number of flash flood events in the past 10 years.",
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class HazardData(BaseModel):
@@ -293,26 +305,34 @@ class HazardData(BaseModel):
 
     fema_risk_rating: str | None = Field(
         None,
+        validation_alias=AliasChoices("fema_risk_rating", "femaRiskRating"),
         serialization_alias="femaRiskRating",
         description="FEMA National Risk Index overall risk rating for the county.",
     )
     top_hazards: list[str] = Field(
         default_factory=list,
+        validation_alias=AliasChoices("top_hazards", "topHazards"),
         serialization_alias="topHazards",
         description="Top natural hazards identified for this location.",
     )
     recent_disaster_declarations: int = Field(
         0,
+        validation_alias=AliasChoices(
+            "recent_disaster_declarations", "recentDisasterDeclarations"
+        ),
         serialization_alias="recentDisasterDeclarations",
         description="Number of FEMA disaster declarations in the county in recent years.",
     )
     storm_event_counts_10yr: StormEventCounts | None = Field(
         None,
+        validation_alias=AliasChoices(
+            "storm_event_counts_10yr", "stormEventCounts10Yr"
+        ),
         serialization_alias="stormEventCounts10Yr",
         description="Breakdown of storm events by type over the past 10 years.",
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class AIBrief(BaseModel):
@@ -324,16 +344,19 @@ class AIBrief(BaseModel):
 
     executive_summary: str | None = Field(
         None,
+        validation_alias=AliasChoices("executive_summary", "executiveSummary"),
         serialization_alias="executiveSummary",
         description="One-paragraph overview of the submission's risk profile and triage recommendation.",
     )
     risk_flags: list[str] = Field(
         default_factory=list,
+        validation_alias=AliasChoices("risk_flags", "riskFlags"),
         serialization_alias="riskFlags",
         description="Key risk concerns identified from document and hazard data.",
     )
     questions_for_broker: list[str] = Field(
         default_factory=list,
+        validation_alias=AliasChoices("questions_for_broker", "questionsForBroker"),
         serialization_alias="questionsForBroker",
         description="Suggested follow-up questions for the broker to clarify.",
     )
@@ -342,7 +365,7 @@ class AIBrief(BaseModel):
         description="Model confidence level: high, medium, or low.",
     )
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class DataSource(BaseModel):

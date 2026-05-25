@@ -6,7 +6,10 @@ from datetime import datetime, timezone
 
 from risklens_api.core.constants import SubmissionStatus
 from risklens_api.schemas.submissions import (
+    AIBrief,
+    ExtractedData,
     FileInfo,
+    HazardData,
     SubmissionStatusResponse,
     UploadUrlRequest,
     UploadUrlResponse,
@@ -51,3 +54,50 @@ def test_submission_status_response_serializes() -> None:
     assert data["submissionId"] == "X1"
     assert data["status"] == "UPLOADED"
     assert data["file"]["fileName"] == "f.pdf"
+
+
+def test_summary_submodels_accept_camel_case_from_dynamo() -> None:
+    extracted = ExtractedData.model_validate(
+        {
+            "insuredName": "Veridian Light Manufacturing LLC",
+            "address": {
+                "line1": "14350 Victory Blvd",
+                "city": "Los Angeles",
+                "state": "CA",
+                "postalCode": "91401",
+                "countyFips": "06037",
+            },
+            "requestedCoverage": "Commercial Property",
+            "limits": {"building": 6500000, "businessPersonalProperty": 1750000},
+            "missingFields": [],
+        }
+    )
+    hazards = HazardData.model_validate(
+        {
+            "femaRiskRating": "Relatively High",
+            "topHazards": ["Earthquake", "Wildfire"],
+            "recentDisasterDeclarations": 4,
+            "stormEventCounts10Yr": {
+                "hail": 16,
+                "strongWind": 83,
+                "flashFlood": 21,
+            },
+        }
+    )
+    brief = AIBrief.model_validate(
+        {
+            "executiveSummary": "Structured fallback summary.",
+            "riskFlags": ["County hazard profile: Relatively High."],
+            "questionsForBroker": ["Confirm address."],
+            "confidence": "low",
+        }
+    )
+
+    assert extracted.insured_name == "Veridian Light Manufacturing LLC"
+    assert extracted.address is not None
+    assert extracted.address.postal_code == "91401"
+    assert extracted.limits is not None
+    assert extracted.limits.business_personal_property == 1750000
+    assert hazards.storm_event_counts_10yr is not None
+    assert hazards.storm_event_counts_10yr.strong_wind == 83
+    assert brief.executive_summary == "Structured fallback summary."

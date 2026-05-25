@@ -205,14 +205,15 @@ resource "aws_lambda_function" "worker" {
 
   environment {
     variables = {
-      AWS_ACCOUNT_ID     = var.aws_account_id
-      BEDROCK_MODEL_ID   = "eu.anthropic.claude-sonnet-4-6"
-      HAZARDS_TABLE      = var.hazards_table_name
-      S3_BUCKET          = aws_s3_bucket.submissions.bucket
-      SUBMISSIONS_BUCKET = aws_s3_bucket.submissions.bucket
-      SUBMISSIONS_TABLE  = var.submissions_table_name
-      QUEUE_URL          = aws_sqs_queue.processing.url
-      LOG_LEVEL          = "INFO"
+      AWS_ACCOUNT_ID           = var.aws_account_id
+      BEDROCK_BRIEF_MAX_TOKENS = "1000"
+      BEDROCK_MODEL_ID         = "eu.anthropic.claude-sonnet-4-6"
+      HAZARDS_TABLE            = var.hazards_table_name
+      S3_BUCKET                = aws_s3_bucket.submissions.bucket
+      SUBMISSIONS_BUCKET       = aws_s3_bucket.submissions.bucket
+      SUBMISSIONS_TABLE        = var.submissions_table_name
+      QUEUE_URL                = aws_sqs_queue.processing.url
+      LOG_LEVEL                = "INFO"
     }
   }
 

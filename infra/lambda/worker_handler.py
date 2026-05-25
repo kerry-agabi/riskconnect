@@ -50,7 +50,7 @@ def _build_processor() -> SubmissionProcessor:
             table_name=submissions_table,
             region_name=region,
             model_id=settings.bedrock_model_id,
-            max_output_tokens=int(os.environ.get("BEDROCK_BRIEF_MAX_TOKENS", "500")),
+            max_output_tokens=int(os.environ.get("BEDROCK_BRIEF_MAX_TOKENS", "1000")),
         ),
     )
 
