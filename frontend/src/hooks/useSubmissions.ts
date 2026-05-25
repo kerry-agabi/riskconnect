@@ -10,6 +10,7 @@ interface UseSubmissionsReturn {
   hasMore: boolean;
   refresh: () => void;
   loadMore: () => void;
+  clear: () => void;
 }
 
 export function useSubmissions(authReady = true): UseSubmissionsReturn {
@@ -77,6 +78,13 @@ export function useSubmissions(authReady = true): UseSubmissionsReturn {
     refresh: () => fetchSubmissions(),
     loadMore: () => {
       if (nextToken && !loadingMore) fetchSubmissions(nextToken);
+    },
+    clear: () => {
+      setSubmissions([]);
+      setNextToken(null);
+      setError(null);
+      setLoading(false);
+      setLoadingMore(false);
     },
   };
 }

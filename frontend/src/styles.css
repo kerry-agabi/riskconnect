@@ -44,6 +44,8 @@ body {
   padding: 0 24px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .app-nav-brand {
@@ -73,6 +75,34 @@ body {
   font-size: 15px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.app-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.app-nav-button {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.app-nav-button:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.app-nav-button:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
 }
 
 /* ===== Content Area ===== */
@@ -174,6 +204,18 @@ body {
   font-weight: 600;
   margin: 0 0 16px;
   color: var(--color-text);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-header .panel-heading {
+  margin-bottom: 0;
 }
 
 /* ===== Upload Panel ===== */
@@ -1045,6 +1087,16 @@ body {
 @media (max-width: 480px) {
   .app-nav-inner {
     padding: 0 16px;
+  }
+
+  .app-nav-brand {
+    min-width: 0;
+  }
+
+  .app-nav-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .upload-file-info {

@@ -23,6 +23,7 @@ interface RecentSubmissionsProps {
   error?: string | null;
   hasMore?: boolean;
   onLoadMore?: () => void;
+  onClear?: () => void;
   onSelect?: (submissionId: string) => void;
 }
 
@@ -91,16 +92,31 @@ export function RecentSubmissions({
   error = null,
   hasMore = false,
   onLoadMore,
+  onClear,
   onSelect,
 }: RecentSubmissionsProps) {
+  const canClear = submissions.length > 0 && !loading;
+
   return (
     <section
       className="recent-submissions"
       aria-labelledby="recent-heading"
     >
-      <h2 id="recent-heading" className="panel-heading">
-        Recent Submissions
-      </h2>
+      <div className="panel-header">
+        <h2 id="recent-heading" className="panel-heading">
+          Recent Submissions
+        </h2>
+        {onClear && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={onClear}
+            disabled={!canClear}
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       {loading && <SkeletonRows />}
 

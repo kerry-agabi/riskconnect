@@ -239,6 +239,7 @@ export async function signIn(): Promise<void> {
 export function signOut(): void {
   const config = getConfig();
   clearAuthState();
+  resetRedirectLoop();
   if (!config) return;
   const params = new URLSearchParams({
     client_id: config.clientId,

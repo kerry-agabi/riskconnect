@@ -16,6 +16,7 @@ import {
   getAuthError,
   onAuthStatusChange,
   signIn,
+  signOut,
   type AuthStatus,
 } from "./auth/cognito";
 
@@ -40,6 +41,7 @@ export function App() {
     hasMore: submissionsHasMore,
     refresh: refreshSubmissions,
     loadMore: loadMoreSubmissions,
+    clear: clearSubmissions,
   } = useSubmissions(authReady);
 
   const { upload, state, progress, error, submission, reset } =
@@ -128,7 +130,7 @@ export function App() {
   }
 
   return (
-    <AppShell>
+    <AppShell onSignOut={signOut}>
       <div className="workbench">
         <div className="workbench-left">
           <UploadPanel
@@ -161,6 +163,7 @@ export function App() {
             error={submissionsError}
             hasMore={submissionsHasMore}
             onLoadMore={loadMoreSubmissions}
+            onClear={clearSubmissions}
             onSelect={handleViewSummary}
           />
         </div>

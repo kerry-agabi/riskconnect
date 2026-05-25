@@ -33,6 +33,13 @@ test("renders the app shell with brand and title", async () => {
   expect(screen.getByText("RiskLens")).toBeDefined();
 });
 
+test("renders logout action after auth is ready", async () => {
+  render(<App />);
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "Log out" })).toBeDefined();
+  });
+});
+
 test("renders the upload panel", async () => {
   render(<App />);
   expect(screen.getByText("Upload Submission")).toBeDefined();
@@ -388,4 +395,40 @@ test("shows submissions from API in the table", async () => {
     expect(screen.getByText("property-pack.pdf")).toBeDefined();
   });
   expect(screen.getByText("READY")).toBeDefined();
+});
+
+test("clear recent submissions empties the local list", async () => {
+  mockFetch.mockImplementation((url: string) => {
+    if (typeof url === "string" && url.includes("/submissions")) {
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                submissionId: "sub-clear",
+                status: "READY",
+                createdAt: "2026-05-24T10:00:00Z",
+                fileName: "clear-me.pdf",
+              },
+            ],
+            nextToken: null,
+          }),
+      });
+    }
+    return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+  });
+
+  render(<App />);
+
+  await waitFor(() => {
+    expect(screen.getByText("clear-me.pdf")).toBeDefined();
+  });
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+  });
+
+  expect(screen.queryByText("clear-me.pdf")).toBeNull();
+  expect(screen.getByText("No submissions yet")).toBeDefined();
 });
