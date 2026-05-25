@@ -17,7 +17,7 @@ Constraints:
 - One repair retry for invalid JSON.
 - No invented facts, bind/decline/pricing, or actuarial claims.
 - Token and cost caps.
-- Default POC model is `anthropic.claude-sonnet-4-6` unless docs and Terraform are updated together.
+- Default POC model is `anthropic.claude-3-haiku-20240307-v1:0` unless docs and Terraform are updated together. If using a newer Sonnet model, use the Bedrock inference profile ID/ARN required by AWS.
 - Live Bedrock permissions and worker runtime settings are managed by the Terraform/HCP Terraform `mrisk` stack.
 
 Add tests for prompt injection and invalid JSON where relevant.

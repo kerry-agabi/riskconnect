@@ -116,7 +116,7 @@ protocols. Use Textract async document text detection for PDF input. Use one
 bounded Bedrock extraction prompt and one bounded triage-brief prompt.
 
 Defaults:
-- model: anthropic.claude-sonnet-4-6
+- model: anthropic.claude-3-haiku-20240307-v1:0
 - max input text: 8000 characters
 - extraction output cap: 800 tokens
 - brief output cap: 500 tokens
@@ -148,4 +148,3 @@ Review the deployed POC for API contract drift, auth gaps, IAM overreach, raw
 document logging, model-cost controls, failure handling, UI usability, and
 rollback steps. Findings first, ordered by severity, with file references.
 ```
-

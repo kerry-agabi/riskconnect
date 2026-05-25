@@ -3,7 +3,7 @@
 ## Model Use
 
 - Use low-cost Bedrock models by default.
-- POC default model is `anthropic.claude-sonnet-4-6`.
+- POC default model is `anthropic.claude-3-haiku-20240307-v1:0` for direct on-demand invocation.
 - Cap input chunks and output tokens.
 - Record model ID, latency, token usage where available, and schema validation result.
 

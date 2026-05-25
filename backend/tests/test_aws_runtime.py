@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 from io import BytesIO
 from typing import Any
 
 import pytest
+from botocore.exceptions import ClientError
 
 from risklens_api.core.errors import NonRetryableError
 from risklens_api.services import aws_runtime
@@ -43,6 +45,47 @@ class FakeTextractClient:
         if self.status == "SUCCEEDED":
             response["Blocks"] = [{"BlockType": "LINE", "Text": "Extracted line"}]
         return response
+
+
+class FakeBedrockBody:
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self._payload = payload
+
+    def read(self) -> bytes:
+        return json.dumps(self._payload).encode("utf-8")
+
+
+class FakeBedrockClient:
+    def __init__(self, responses: list[str]) -> None:
+        self.responses = responses
+        self.requests: list[dict[str, Any]] = []
+
+    def invoke_model(self, **kwargs: Any) -> dict[str, Any]:
+        self.requests.append(kwargs)
+        text = self.responses.pop(0)
+        return {
+            "body": FakeBedrockBody({
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text,
+                    }
+                ]
+            })
+        }
+
+
+class FailingBedrockClient:
+    def invoke_model(self, **kwargs: Any) -> dict[str, Any]:
+        raise ClientError(
+            {
+                "Error": {
+                    "Code": "ValidationException",
+                    "Message": "Invocation requires an inference profile",
+                }
+            },
+            "InvokeModel",
+        )
 
 
 def _patch_boto3_clients(
@@ -101,3 +144,48 @@ def test_text_extraction_reports_textract_failure_message(
         service.extract_text("SUB-1", "submissions/SUB-1/raw/submission.pdf")
 
     assert textract.started
+
+
+def test_bedrock_json_parser_accepts_fenced_json() -> None:
+    client = FakeBedrockClient([
+        'Here is the JSON:\n```json\n{"insured_name": "Houston Market"}\n```'
+    ])
+
+    result = aws_runtime._invoke_bedrock_json(  # noqa: SLF001
+        client,
+        "anthropic.claude-3-haiku-20240307-v1:0",
+        "Return JSON",
+        200,
+    )
+
+    assert result == {"insured_name": "Houston Market"}
+
+
+def test_bedrock_json_repair_prompt_includes_invalid_response() -> None:
+    client = FakeBedrockClient([
+        "insured_name: Houston Market",
+        '{"insured_name": "Houston Market"}',
+    ])
+
+    result = aws_runtime._invoke_bedrock_json(  # noqa: SLF001
+        client,
+        "anthropic.claude-3-haiku-20240307-v1:0",
+        "Return JSON",
+        200,
+    )
+
+    assert result == {"insured_name": "Houston Market"}
+    repair_body = json.loads(client.requests[1]["body"])
+    repair_text = repair_body["messages"][0]["content"][0]["text"]
+    assert "Previous invalid response" in repair_text
+    assert "insured_name: Houston Market" in repair_text
+
+
+def test_bedrock_client_validation_error_surfaces_real_message() -> None:
+    with pytest.raises(NonRetryableError, match="inference profile"):
+        aws_runtime._invoke_bedrock_json(  # noqa: SLF001
+            FailingBedrockClient(),
+            "anthropic.claude-sonnet-4-6",
+            "Return JSON",
+            200,
+        )

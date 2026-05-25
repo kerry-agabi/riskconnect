@@ -16,7 +16,7 @@ Before editing, read only the relevant sections of:
 
 Design and implement Bedrock calls as bounded, reviewable, schema-first workflows.
 
-Infrastructure context: live Bedrock access and worker runtime permissions are managed by the Terraform/HCP Terraform `mrisk` stack. The POC default is `anthropic.claude-sonnet-4-6` with bounded extraction input and small output token ceilings. Keep model and permission needs explicit in docs when they change.
+Infrastructure context: live Bedrock access and worker runtime permissions are managed by the Terraform/HCP Terraform `mrisk` stack. The POC default is `anthropic.claude-3-haiku-20240307-v1:0` with bounded extraction input and small output token ceilings. Newer Sonnet models may require an inference profile ID instead of a direct model ID; keep model and permission needs explicit in docs when they change.
 
 Hard constraints:
 

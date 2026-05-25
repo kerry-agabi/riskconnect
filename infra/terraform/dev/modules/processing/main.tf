@@ -206,7 +206,7 @@ resource "aws_lambda_function" "worker" {
   environment {
     variables = {
       AWS_ACCOUNT_ID     = var.aws_account_id
-      BEDROCK_MODEL_ID   = "anthropic.claude-sonnet-4-6"
+      BEDROCK_MODEL_ID   = "anthropic.claude-3-haiku-20240307-v1:0"
       HAZARDS_TABLE      = var.hazards_table_name
       S3_BUCKET          = aws_s3_bucket.submissions.bucket
       SUBMISSIONS_BUCKET = aws_s3_bucket.submissions.bucket
