@@ -48,18 +48,19 @@ module "data" {
 module "processing" {
   source = "./modules/processing"
 
-  name_prefix                 = local.name_prefix
-  aws_account_id              = var.aws_account_id
-  aws_region                  = var.aws_region
-  hazards_table_arn           = module.data.hazards_table_arn
-  hazards_table_name          = module.data.hazards_table_name
-  submissions_table_arn       = module.data.submissions_table_arn
-  submissions_table_name      = module.data.submissions_table_name
-  worker_lambda_package_path  = local.worker_lambda_package_path
-  worker_reserved_concurrency = var.worker_reserved_concurrency
-  log_retention_days          = var.log_retention_days
-  force_destroy_buckets       = var.force_destroy_buckets
-  tags                        = local.tags
+  name_prefix                      = local.name_prefix
+  aws_account_id                   = var.aws_account_id
+  aws_region                       = var.aws_region
+  hazards_table_arn                = module.data.hazards_table_arn
+  hazards_table_name               = module.data.hazards_table_name
+  submissions_table_arn            = module.data.submissions_table_arn
+  submissions_table_name           = module.data.submissions_table_name
+  worker_lambda_package_path       = local.worker_lambda_package_path
+  worker_reserved_concurrency      = var.worker_reserved_concurrency
+  log_retention_days               = var.log_retention_days
+  force_destroy_buckets            = var.force_destroy_buckets
+  submissions_cors_allowed_origins = var.submissions_cors_allowed_origins
+  tags                             = local.tags
 }
 
 module "api" {

@@ -101,6 +101,12 @@ variable "force_destroy_buckets" {
   default     = false
 }
 
+variable "submissions_cors_allowed_origins" {
+  description = "Browser origins allowed to PUT directly to presigned submission upload URLs. Use [\"*\"] for the dev POC or restrict to CloudFront/localhost origins."
+  type        = list(string)
+  default     = ["*"]
+}
+
 variable "cognito_callback_urls" {
   description = "Allowed Cognito Hosted UI callback URLs."
   type        = list(string)

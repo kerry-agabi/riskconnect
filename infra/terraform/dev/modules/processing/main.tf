@@ -12,6 +12,18 @@ resource "aws_s3_bucket_public_access_block" "submissions" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_cors_configuration" "submissions" {
+  bucket = aws_s3_bucket.submissions.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD", "PUT"]
+    allowed_origins = var.submissions_cors_allowed_origins
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "submissions" {
   bucket = aws_s3_bucket.submissions.id
 

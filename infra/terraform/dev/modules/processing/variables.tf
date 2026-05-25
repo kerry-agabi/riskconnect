@@ -57,6 +57,12 @@ variable "force_destroy_buckets" {
   default     = false
 }
 
+variable "submissions_cors_allowed_origins" {
+  description = "Browser origins allowed to PUT directly to presigned submission upload URLs."
+  type        = list(string)
+  default     = ["*"]
+}
+
 variable "tags" {
   description = "Common tags."
   type        = map(string)

@@ -40,12 +40,16 @@ GitHub Actions should not store static AWS keys.
 
 `STACK_NAME` is the product/stack label used by CI. `TERRAFORM_PROJECT_NAME` is the Terraform AWS resource prefix passed to `project_name`. While using the old `riskconnect-dev-tfc-deploy` role, keep `TERRAFORM_PROJECT_NAME=riskconnect` so Terraform manages `riskconnect-dev-*` resources instead of trying to create `mrisk-dev-*` IAM roles.
 
+The dev POC defaults `submissions_cors_allowed_origins` to `["*"]` so browser PUT uploads to presigned S3 URLs work from CloudFront and localhost. To restrict it later, set that Terraform variable to the deployed CloudFront origin and `http://localhost:5173`.
+
 The deploy workflow reads Cognito outputs after Terraform apply and injects these Vite build variables automatically:
 
 - `VITE_COGNITO_DOMAIN`
 - `VITE_COGNITO_CLIENT_ID`
 - `VITE_COGNITO_REDIRECT_URI`
 - `VITE_COGNITO_LOGOUT_URI`
+
+The browser uploads directly to the submissions S3 bucket with a presigned PUT URL. If the app shows a preflight error with no `Access-Control-Allow-Origin` header, verify the submissions bucket CORS rule allows `PUT`, `GET`, and `HEAD` from the frontend origin.
 
 ## Required HCP Terraform Workspace Configuration
 
