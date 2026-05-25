@@ -353,7 +353,11 @@ class DynamoStatusStore:
 
 
 class TextractTextExtractionService:
-    """Textract async text extraction for PDF/image submissions in S3."""
+    """Text extraction for submissions in S3.
+
+    Plain text uploads are copied directly into the extracted-text artifact.
+    PDF/image submissions use Textract async document text detection.
+    """
 
     def __init__(
         self,
@@ -371,18 +375,21 @@ class TextractTextExtractionService:
     def extract_text(
         self, submission_id: str, object_key: str
     ) -> TextExtractionResult:
-        try:
-            start = self._textract.start_document_text_detection(
-                DocumentLocation={
-                    "S3Object": {"Bucket": self._bucket, "Name": object_key}
-                }
-            )
-            job_id = start["JobId"]
-            text = self._wait_for_text(job_id)
-        except ClientError as exc:
-            if _is_retryable_client_error(exc):
-                raise RetryableError("Textract text extraction was throttled or unavailable") from exc
-            raise NonRetryableError("Textract could not read the submission document") from exc
+        if self._is_plain_text_object(object_key):
+            text = self._read_plain_text_object(object_key)
+        else:
+            try:
+                start = self._textract.start_document_text_detection(
+                    DocumentLocation={
+                        "S3Object": {"Bucket": self._bucket, "Name": object_key}
+                    }
+                )
+                job_id = start["JobId"]
+                text = self._wait_for_text(job_id)
+            except ClientError as exc:
+                if _is_retryable_client_error(exc):
+                    raise RetryableError("Textract text extraction was throttled or unavailable") from exc
+                raise NonRetryableError("Textract could not read the submission document") from exc
 
         text_key = f"submissions/{submission_id}/text/extracted.txt"
         self._s3.put_object(
@@ -395,6 +402,27 @@ class TextractTextExtractionService:
             text_object_key=text_key,
             character_count=len(text),
         )
+
+    def _is_plain_text_object(self, object_key: str) -> bool:
+        if object_key.lower().endswith((".txt", ".text")):
+            return True
+        try:
+            response = self._s3.head_object(Bucket=self._bucket, Key=object_key)
+        except ClientError as exc:
+            if _is_retryable_client_error(exc):
+                raise RetryableError("S3 object metadata lookup was throttled or unavailable") from exc
+            return False
+        content_type = str(response.get("ContentType", "")).split(";", maxsplit=1)[0]
+        return content_type.lower() == "text/plain"
+
+    def _read_plain_text_object(self, object_key: str) -> str:
+        try:
+            response = self._s3.get_object(Bucket=self._bucket, Key=object_key)
+        except ClientError as exc:
+            if _is_retryable_client_error(exc):
+                raise RetryableError("S3 text object read was throttled or unavailable") from exc
+            raise NonRetryableError("Could not read plain text submission") from exc
+        return cast(str, response["Body"].read().decode("utf-8", errors="replace"))
 
     def _wait_for_text(self, job_id: str) -> str:
         deadline = time.monotonic() + self._timeout_seconds
@@ -417,7 +445,8 @@ class TextractTextExtractionService:
                     continue
                 return "\n".join(lines)
             if status == "FAILED":
-                raise NonRetryableError("Textract text extraction failed")
+                message = response.get("StatusMessage") or "Textract text extraction failed"
+                raise NonRetryableError(f"Textract text extraction failed: {message}")
             time.sleep(self._poll_seconds)
         raise RetryableError("Textract text extraction timed out")
 
