@@ -34,7 +34,7 @@ class Settings(BaseModel):
         description="DynamoDB table name for county hazard cache records.",
     )
     bedrock_model_id: str = Field(
-        "anthropic.claude-3-haiku-20240307-v1:0",
+        "anthropic.claude-sonnet-4-6",
         description="Amazon Bedrock model ID for extraction and triage brief generation.",
     )
     bedrock_max_input_chars: int = Field(
@@ -71,7 +71,7 @@ def get_settings() -> Settings:
         hazards_table=os.environ.get("HAZARDS_TABLE", ""),
         aws_region=os.environ.get("AWS_REGION", "us-east-1"),
         bedrock_model_id=os.environ.get(
-            "BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"
+            "BEDROCK_MODEL_ID", "anthropic.claude-sonnet-4-6"
         ),
         bedrock_max_input_chars=int(os.environ.get("BEDROCK_MAX_INPUT_CHARS", "8000")),
         max_file_size_bytes=int(os.environ.get("MAX_FILE_SIZE_BYTES", "10000000")),

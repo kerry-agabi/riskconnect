@@ -4,7 +4,7 @@
 
 Use Amazon Bedrock with a low-cost, low-latency model first:
 
-- Preferred MVP: Anthropic Claude Haiku-class model available in the AWS region.
+- Preferred MVP: Anthropic Claude anthropic.claude-sonnet-4-6-class model available in the AWS region.
 - Fallback: Amazon Nova Micro/Lite if account access or cost is better.
 - Avoid larger models for default processing unless a submission is manually escalated.
 
