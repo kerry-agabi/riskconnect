@@ -12,7 +12,7 @@ interface UseSubmissionsReturn {
   loadMore: () => void;
 }
 
-export function useSubmissions(): UseSubmissionsReturn {
+export function useSubmissions(authReady = true): UseSubmissionsReturn {
   const [submissions, setSubmissions] = useState<SubmissionListItem[]>([]);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,10 +51,14 @@ export function useSubmissions(): UseSubmissionsReturn {
   }, [mergeUnique]);
 
   useEffect(() => {
+    // Do not fetch until auth has settled; otherwise the request races the
+    // token exchange and goes out without an Authorization header -> 401.
+    if (!authReady) return;
     fetchSubmissions();
-  }, [fetchSubmissions]);
+  }, [authReady, fetchSubmissions]);
 
   useEffect(() => {
+    if (!authReady) return;
     if (!submissions.some((item) => PROCESSING_STATUSES.has(item.status))) {
       return;
     }
@@ -62,7 +66,7 @@ export function useSubmissions(): UseSubmissionsReturn {
       fetchSubmissions();
     }, 15_000);
     return () => window.clearInterval(interval);
-  }, [fetchSubmissions, submissions]);
+  }, [authReady, fetchSubmissions, submissions]);
 
   return {
     submissions,

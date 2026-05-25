@@ -5,16 +5,32 @@ import { RecentSubmissions } from "./components/RecentSubmissions";
 import { StatusArea } from "./components/StatusArea";
 import type { ActiveProcessing, TerminalResult } from "./components/StatusArea";
 import { SummaryPanel } from "./components/SummaryPanel";
+import { AuthGate } from "./components/AuthGate";
 import { useSubmissionUpload } from "./hooks/useSubmissionUpload";
 import { useSubmissions } from "./hooks/useSubmissions";
 import { useSubmissionSummary } from "./hooks/useSubmissionSummary";
 import { TERMINAL_STATUSES } from "./api/types";
-import { installCognitoAuth } from "./auth/cognito";
+import {
+  installCognitoAuth,
+  getAuthStatus,
+  getAuthError,
+  onAuthStatusChange,
+  signIn,
+  type AuthStatus,
+} from "./auth/cognito";
 
 export function App() {
+  const [authStatus, setAuthStatus] = useState<AuthStatus>(() =>
+    getAuthStatus(),
+  );
+
   useEffect(() => {
+    const unsubscribe = onAuthStatusChange(setAuthStatus);
     void installCognitoAuth();
+    return unsubscribe;
   }, []);
+
+  const authReady = authStatus === "authenticated";
 
   const {
     submissions,
@@ -24,7 +40,7 @@ export function App() {
     hasMore: submissionsHasMore,
     refresh: refreshSubmissions,
     loadMore: loadMoreSubmissions,
-  } = useSubmissions();
+  } = useSubmissions(authReady);
 
   const { upload, state, progress, error, submission, reset } =
     useSubmissionUpload(refreshSubmissions);
@@ -102,6 +118,14 @@ export function App() {
       })),
     [submissions],
   );
+
+  if (!authReady) {
+    return (
+      <AppShell>
+        <AuthGate status={authStatus} error={getAuthError()} onSignIn={signIn} />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

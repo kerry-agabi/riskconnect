@@ -104,6 +104,70 @@ body {
   gap: 20px;
 }
 
+/* ===== Auth Gate ===== */
+.auth-gate {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 48px 16px;
+  min-height: 320px;
+}
+
+.auth-gate-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 32px;
+  min-height: 220px;
+  box-sizing: border-box;
+}
+
+.auth-gate-eyebrow {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+}
+
+.auth-gate-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.auth-gate-body {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.auth-gate-button {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--color-navy);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.auth-gate-button:hover {
+  background: var(--color-navy-light);
+}
+
+.auth-gate-button:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
 /* ===== Panel Heading ===== */
 .panel-heading {
   font-size: 15px;

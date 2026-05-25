@@ -25,8 +25,55 @@ interface TokenResponse {
 const TOKEN_KEY = "risklens.cognito.tokens";
 const PKCE_VERIFIER_KEY = "risklens.cognito.pkceVerifier";
 const OAUTH_STATE_KEY = "risklens.cognito.state";
+const REDIRECT_LOG_KEY = "risklens.cognito.redirects";
 const TOKEN_REFRESH_SKEW_MS = 60_000;
 const AUTH_SCOPE = "openid email profile";
+
+// Loop breaker: if more than MAX redirects happen inside WINDOW, stop bouncing
+// and surface an error so the user sees a manual Sign-in CTA instead of a storm.
+const REDIRECT_WINDOW_MS = 20_000;
+const REDIRECT_MAX = 2;
+
+/**
+ * Auth readiness signal. API calls must wait for this to settle so requests
+ * never go out before the code-for-token exchange has completed.
+ *   initializing   - bootstrap in progress (exchange / token read pending)
+ *   authenticated  - a usable token exists (or auth is not configured for dev)
+ *   unauthenticated - no token, loop broken, or session expired
+ */
+export type AuthStatus = "initializing" | "authenticated" | "unauthenticated";
+
+let authStatus: AuthStatus = "initializing";
+let authError: string | null = null;
+const statusListeners = new Set<(status: AuthStatus) => void>();
+
+// Re-entrancy guard so a 401 storm or concurrent callers cannot fire multiple
+// hosted-UI navigations.
+let redirectInFlight = false;
+
+export function getAuthStatus(): AuthStatus {
+  return authStatus;
+}
+
+export function getAuthError(): string | null {
+  return authError;
+}
+
+export function onAuthStatusChange(
+  cb: (status: AuthStatus) => void,
+): () => void {
+  statusListeners.add(cb);
+  return () => {
+    statusListeners.delete(cb);
+  };
+}
+
+function setAuthStatus(next: AuthStatus, error: string | null = null): void {
+  authError = error;
+  if (authStatus === next) return;
+  authStatus = next;
+  statusListeners.forEach((cb) => cb(next));
+}
 
 function getConfig(): CognitoConfig | null {
   const domain = import.meta.env.VITE_COGNITO_DOMAIN;
@@ -68,6 +115,30 @@ function clearAuthState(): void {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(PKCE_VERIFIER_KEY);
   sessionStorage.removeItem(OAUTH_STATE_KEY);
+}
+
+/**
+ * Records a redirect timestamp and reports whether the loop-breaker threshold
+ * has been exceeded within the rolling window. When tripped we must not
+ * redirect again until a successful token acquisition resets the counter.
+ */
+function recordRedirectAndCheckLoop(): boolean {
+  const now = Date.now();
+  let timestamps: number[] = [];
+  try {
+    const raw = sessionStorage.getItem(REDIRECT_LOG_KEY);
+    if (raw) timestamps = JSON.parse(raw) as number[];
+  } catch {
+    timestamps = [];
+  }
+  timestamps = timestamps.filter((t) => now - t < REDIRECT_WINDOW_MS);
+  timestamps.push(now);
+  sessionStorage.setItem(REDIRECT_LOG_KEY, JSON.stringify(timestamps));
+  return timestamps.length > REDIRECT_MAX;
+}
+
+function resetRedirectLoop(): void {
+  sessionStorage.removeItem(REDIRECT_LOG_KEY);
 }
 
 function randomString(byteLength = 32): string {
@@ -121,12 +192,30 @@ async function refresh(config: CognitoConfig, refreshToken: string): Promise<str
   });
   const response = await postTokenRequest(config, body);
   writeTokens(response);
-  return response.access_token;
+  // API Gateway JWT authorizer validates `aud` (= app client id), which only
+  // the ID token carries; access tokens expose `client_id` instead. Send the
+  // ID token, falling back to the access token if one is somehow absent.
+  return response.id_token ?? response.access_token;
 }
 
 export async function signIn(): Promise<void> {
   const config = getConfig();
   if (!config) return;
+
+  // Re-entrancy guard: a single redirect at a time.
+  if (redirectInFlight) return;
+
+  // Loop breaker: too many redirects in the window means the round-trip keeps
+  // failing (e.g. authorizer rejects every fresh token). Stop and surface it.
+  if (recordRedirectAndCheckLoop()) {
+    setAuthStatus(
+      "unauthenticated",
+      "Sign-in did not complete after multiple attempts. Please sign in again.",
+    );
+    return;
+  }
+
+  redirectInFlight = true;
 
   const verifier = randomString(64);
   const state = randomString(32);
@@ -197,34 +286,81 @@ async function getAccessToken(): Promise<string | null> {
 
   const tokens = readTokens();
   if (!tokens) {
-    await signIn();
+    // Never redirect as a side effect of a data fetch. Redirects are owned by
+    // the auth bootstrap and the guarded unauthorized handler.
     return null;
   }
 
   if (tokens.expiresAt - Date.now() > TOKEN_REFRESH_SKEW_MS) {
-    return tokens.accessToken;
+    // Authorizer validates the `aud` claim (ID token only); fall back to the
+    // access token only if no ID token was stored.
+    return tokens.idToken ?? tokens.accessToken;
   }
 
   if (tokens.refreshToken) {
-    return refresh(config, tokens.refreshToken);
+    try {
+      return await refresh(config, tokens.refreshToken);
+    } catch {
+      // Refresh failed (e.g. expired refresh token). Report unusable; the
+      // unauthorized handler / bootstrap decides whether to redirect.
+      return null;
+    }
   }
 
-  await signIn();
   return null;
 }
 
 export async function installCognitoAuth(): Promise<void> {
   const config = getConfig();
-  if (!config) return;
+  if (!config) {
+    // Auth not configured (local/dev/test): requests go out unauthenticated,
+    // so there is nothing to gate on. Treat as ready immediately.
+    setAuthStatus("authenticated");
+    return;
+  }
 
   setAuthTokenProvider(getAccessToken);
   setUnauthorizedHandler(async () => {
+    // A 401 while we believe we are authenticated means the token is being
+    // rejected. Do not auto-loop: drop to unauthenticated and let the UI show
+    // a manual Sign-in CTA. Only the explicit CTA re-enters signIn().
+    if (authStatus === "authenticated") {
+      clearAuthState();
+      setAuthStatus(
+        "unauthenticated",
+        "Your session was rejected. Please sign in again.",
+      );
+      return;
+    }
+    // Otherwise (already initializing/unauthenticated) attempt a guarded,
+    // loop-broken redirect.
     clearAuthState();
     await signIn();
   });
 
-  const completed = await completeSignInFromUrl(config);
-  if (!completed && !readTokens()) {
+  try {
+    // Resolve status only AFTER the code-for-token exchange and token read.
+    const completed = await completeSignInFromUrl(config);
+    const token = await getAccessToken();
+    if (token) {
+      // Successful acquisition clears the redirect-loop counter.
+      resetRedirectLoop();
+      setAuthStatus("authenticated");
+      return;
+    }
+    if (completed) {
+      // Exchange ran but produced no usable token.
+      setAuthStatus("unauthenticated", "Sign-in did not return a valid session.");
+      return;
+    }
+    // No tokens yet and no callback in the URL: start a guarded sign-in.
     await signIn();
+    // If signIn tripped the loop breaker it already set unauthenticated;
+    // otherwise the browser is navigating away and status stays initializing.
+  } catch (err) {
+    setAuthStatus(
+      "unauthenticated",
+      err instanceof Error ? err.message : "Sign-in failed.",
+    );
   }
 }
