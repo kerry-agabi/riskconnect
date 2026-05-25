@@ -61,7 +61,7 @@ export function SummaryPanel({
       {loading && (
         <div className="summary-loading" aria-live="polite">
           <span className="upload-spinner" aria-hidden="true" />
-          <span>Loading triage brief…</span>
+          <span>Loading triage brief...</span>
         </div>
       )}
 
@@ -81,7 +81,7 @@ export function SummaryPanel({
           <ExtractedFactsBlock extracted={summary.extracted} />
           <HazardsBlock hazards={summary.hazards} />
           <AiBriefBlock brief={summary.aiBrief} />
-          <SourcesBlock sources={summary.sources} />
+          <SourcesBlock sources={summary.sources ?? []} />
         </div>
       )}
     </section>
@@ -92,13 +92,15 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="data-row">
       <dt className="data-row-label">{label}</dt>
-      <dd className="data-row-value">{value ?? <span className="data-empty">—</span>}</dd>
+      <dd className="data-row-value">{value ?? <span className="data-empty">-</span>}</dd>
     </div>
   );
 }
 
-function ExtractedFactsBlock({ extracted }: { extracted: ExtractedFacts }) {
-  const { address, limits, missingFields } = extracted;
+function ExtractedFactsBlock({ extracted }: { extracted: ExtractedFacts | null }) {
+  const address = extracted?.address ?? null;
+  const limits = extracted?.limits ?? null;
+  const missingFields = extracted?.missingFields ?? [];
   const addressLine = address
     ? [address.line1, address.city, address.state, address.postalCode]
         .filter(Boolean)
@@ -108,26 +110,30 @@ function ExtractedFactsBlock({ extracted }: { extracted: ExtractedFacts }) {
   return (
     <div className="summary-block">
       <h3 className="summary-block-title">Extracted Facts</h3>
-      <dl className="data-list">
-        <DataRow label="Insured" value={extracted.insuredName || undefined} />
-        <DataRow label="Address" value={addressLine || undefined} />
-        <DataRow label="Industry" value={extracted.industry || undefined} />
-        <DataRow label="Coverage" value={extracted.requestedCoverage || undefined} />
-        <DataRow
-          label="Building limit"
-          value={
-            limits?.building != null ? formatCurrency(limits.building) : undefined
-          }
-        />
-        <DataRow
-          label="BPP limit"
-          value={
-            limits?.businessPersonalProperty != null
-              ? formatCurrency(limits.businessPersonalProperty)
-              : undefined
-          }
-        />
-      </dl>
+      {extracted ? (
+        <dl className="data-list">
+          <DataRow label="Insured" value={extracted.insuredName || undefined} />
+          <DataRow label="Address" value={addressLine || undefined} />
+          <DataRow label="Industry" value={extracted.industry || undefined} />
+          <DataRow label="Coverage" value={extracted.requestedCoverage || undefined} />
+          <DataRow
+            label="Building limit"
+            value={
+              limits?.building != null ? formatCurrency(limits.building) : undefined
+            }
+          />
+          <DataRow
+            label="BPP limit"
+            value={
+              limits?.businessPersonalProperty != null
+                ? formatCurrency(limits.businessPersonalProperty)
+                : undefined
+            }
+          />
+        </dl>
+      ) : (
+        <p className="summary-empty">No extracted facts were saved for this submission.</p>
+      )}
 
       {missingFields.length > 0 && (
         <div className="missing-fields" role="note">
@@ -145,29 +151,34 @@ function ExtractedFactsBlock({ extracted }: { extracted: ExtractedFacts }) {
   );
 }
 
-function HazardsBlock({ hazards }: { hazards: HazardData }) {
-  const stormEntries = hazards.stormEventCounts10Yr
+function HazardsBlock({ hazards }: { hazards: HazardData | null }) {
+  const topHazards = hazards?.topHazards ?? [];
+  const stormEntries = hazards?.stormEventCounts10Yr
     ? Object.entries(hazards.stormEventCounts10Yr)
     : [];
 
   return (
     <div className="summary-block">
       <h3 className="summary-block-title">Hazard Profile</h3>
-      <dl className="data-list">
-        <DataRow label="FEMA risk rating" value={hazards.femaRiskRating || undefined} />
-        <DataRow
-          label="Disaster declarations"
-          value={
-            hazards.recentDisasterDeclarations != null
-              ? String(hazards.recentDisasterDeclarations)
-              : undefined
-          }
-        />
-      </dl>
+      {hazards ? (
+        <dl className="data-list">
+          <DataRow label="FEMA risk rating" value={hazards.femaRiskRating || undefined} />
+          <DataRow
+            label="Disaster declarations"
+            value={
+              hazards.recentDisasterDeclarations != null
+                ? String(hazards.recentDisasterDeclarations)
+                : undefined
+            }
+          />
+        </dl>
+      ) : (
+        <p className="summary-empty">No hazard data was saved for this submission.</p>
+      )}
 
-      {hazards.topHazards.length > 0 && (
+      {topHazards.length > 0 && (
         <div className="hazard-tags">
-          {hazards.topHazards.map((h) => (
+          {topHazards.map((h) => (
             <span key={h} className="hazard-tag">
               {h}
             </span>
@@ -192,14 +203,19 @@ function HazardsBlock({ hazards }: { hazards: HazardData }) {
   );
 }
 
-function AiBriefBlock({ brief }: { brief: AiBrief }) {
+function AiBriefBlock({ brief }: { brief: AiBrief | null }) {
+  const riskFlags = brief?.riskFlags ?? [];
+  const questionsForBroker = brief?.questionsForBroker ?? [];
+
   return (
     <div className="summary-block summary-block--brief">
       <div className="brief-header">
         <h3 className="summary-block-title">AI Triage Brief</h3>
-        <span className={confidenceClass(brief.confidence)}>
-          {brief.confidence} confidence
-        </span>
+        {brief?.confidence && (
+          <span className={confidenceClass(brief.confidence)}>
+            {brief.confidence} confidence
+          </span>
+        )}
       </div>
 
       <p className="brief-disclaimer" role="note">
@@ -207,24 +223,28 @@ function AiBriefBlock({ brief }: { brief: AiBrief }) {
         against source documents before acting.
       </p>
 
-      <p className="brief-summary">{brief.executiveSummary}</p>
+      {brief?.executiveSummary ? (
+        <p className="brief-summary">{brief.executiveSummary}</p>
+      ) : (
+        <p className="summary-empty">No AI brief was saved for this submission.</p>
+      )}
 
-      {brief.riskFlags.length > 0 && (
+      {riskFlags.length > 0 && (
         <div className="brief-section">
           <h4 className="brief-subtitle">Risk flags</h4>
           <ul className="brief-list">
-            {brief.riskFlags.map((flag, i) => (
+            {riskFlags.map((flag, i) => (
               <li key={i}>{flag}</li>
             ))}
           </ul>
         </div>
       )}
 
-      {brief.questionsForBroker.length > 0 && (
+      {questionsForBroker.length > 0 && (
         <div className="brief-section">
           <h4 className="brief-subtitle">Questions for broker</h4>
           <ul className="brief-list">
-            {brief.questionsForBroker.map((q, i) => (
+            {questionsForBroker.map((q, i) => (
               <li key={i}>{q}</li>
             ))}
           </ul>

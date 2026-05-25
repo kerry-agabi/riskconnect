@@ -88,28 +88,28 @@ export interface ExtractedLimits {
 }
 
 export interface ExtractedFacts {
-  insuredName?: string;
-  address?: ExtractedAddress;
-  industry?: string;
-  requestedCoverage?: string;
-  limits?: ExtractedLimits;
-  missingFields: string[];
+  insuredName?: string | null;
+  address?: ExtractedAddress | null;
+  industry?: string | null;
+  requestedCoverage?: string | null;
+  limits?: ExtractedLimits | null;
+  missingFields?: string[];
 }
 
 export interface HazardData {
-  femaRiskRating?: string;
-  topHazards: string[];
-  recentDisasterDeclarations?: number;
-  stormEventCounts10Yr?: Record<string, number>;
+  femaRiskRating?: string | null;
+  topHazards?: string[];
+  recentDisasterDeclarations?: number | null;
+  stormEventCounts10Yr?: Record<string, number> | null;
 }
 
 export type AiBriefConfidence = "low" | "medium" | "high";
 
 export interface AiBrief {
-  executiveSummary: string;
-  riskFlags: string[];
-  questionsForBroker: string[];
-  confidence: AiBriefConfidence;
+  executiveSummary?: string | null;
+  riskFlags?: string[];
+  questionsForBroker?: string[];
+  confidence?: AiBriefConfidence | null;
 }
 
 export interface SourceLink {
@@ -120,9 +120,9 @@ export interface SourceLink {
 export interface SubmissionSummaryResponse {
   submissionId: string;
   status: Extract<SubmissionStatus, "READY" | "NEEDS_REVIEW">;
-  extracted: ExtractedFacts;
-  hazards: HazardData;
-  aiBrief: AiBrief;
+  extracted: ExtractedFacts | null;
+  hazards: HazardData | null;
+  aiBrief: AiBrief | null;
   sources: SourceLink[];
 }
 

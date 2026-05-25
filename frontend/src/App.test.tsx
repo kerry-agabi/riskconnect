@@ -397,6 +397,70 @@ test("shows submissions from API in the table", async () => {
   expect(screen.getByText("READY")).toBeDefined();
 });
 
+test("renders a partial summary without blanking the page", async () => {
+  const summaryResponse = {
+    submissionId: "sub-partial",
+    status: "NEEDS_REVIEW",
+    extracted: null,
+    hazards: null,
+    aiBrief: null,
+    sources: [],
+  };
+
+  mockFetch.mockImplementation((url: string, options?: RequestInit) => {
+    if (typeof url === "string" && url.includes("/summary")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(summaryResponse),
+      });
+    }
+    if (
+      typeof url === "string" &&
+      url.match(/\/submissions(\?|$)/) &&
+      (!options || options.method === "GET")
+    ) {
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                submissionId: "sub-partial",
+                status: "NEEDS_REVIEW",
+                createdAt: "2026-05-24T10:00:00Z",
+                fileName: "partial-summary.png",
+              },
+            ],
+            nextToken: null,
+          }),
+      });
+    }
+    return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+  });
+
+  render(<App />);
+
+  await waitFor(() => {
+    expect(screen.getByText("partial-summary.png")).toBeDefined();
+  });
+
+  await act(async () => {
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open triage brief for partial-summary.png",
+      }),
+    );
+  });
+
+  await waitFor(() => {
+    expect(
+      screen.getByText("No extracted facts were saved for this submission."),
+    ).toBeDefined();
+  });
+  expect(screen.getByText("No hazard data was saved for this submission.")).toBeDefined();
+  expect(screen.getByText("No AI brief was saved for this submission.")).toBeDefined();
+});
+
 test("clear recent submissions empties the local list", async () => {
   mockFetch.mockImplementation((url: string) => {
     if (typeof url === "string" && url.includes("/submissions")) {

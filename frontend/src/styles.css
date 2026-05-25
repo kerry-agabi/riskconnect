@@ -859,6 +859,13 @@ body {
   font-weight: 400;
 }
 
+.summary-empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .missing-fields {
   margin-top: 12px;
   padding-top: 12px;
