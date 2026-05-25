@@ -95,6 +95,7 @@ data "aws_iam_policy_document" "tfc_deploy" {
       "budgets:*",
       "cloudfront:*",
       "cloudwatch:*",
+      "cognito-idp:*",
       "dynamodb:*",
       "lambda:*",
       "logs:*",

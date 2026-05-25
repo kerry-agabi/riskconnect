@@ -10,12 +10,13 @@ Before editing, read only the relevant sections of:
 
 - `docs/api-contract.md`
 - `docs/architecture.md`
+- `docs/poc-e2e-implementation-prompts.md`
 - `.claude/skills/risklens-backend-standard.md`
 - `.claude/skills/risklens-token-efficiency.md`
 
 Build the backend as a maintainable Python application that can run locally through FastAPI and deploy through Lambda-compatible handlers.
 
-Infrastructure context: deployed backend Lambdas are packaged by `infra/scripts/package_lambdas.py` and managed by the Terraform/HCP Terraform `mrisk` stack.
+Infrastructure context: deployed backend Lambdas are packaged by `infra/scripts/package_lambdas.py` and managed by the Terraform/HCP Terraform `mrisk` stack. Runtime adapters use S3 presigned uploads, SQS work messages, DynamoDB submission/status/summary persistence, Textract async text extraction, Bedrock JSON extraction/brief generation, Census geocoding, and a DynamoDB hazard cache.
 
 Hard constraints:
 
@@ -26,6 +27,7 @@ Hard constraints:
 - Never log full document text, real credentials, presigned URLs, or raw model prompts containing submission text.
 - Keep AWS SDK calls behind service/repository classes.
 - Make status transitions explicit and testable.
+- SQS worker handlers must support partial batch failure via `batchItemFailures`.
 
 Expected module shape:
 

@@ -6,7 +6,7 @@ Use these project subagents to deliver RiskLens consistently and token-efficient
 
 Project skill instructions live in `.claude/skills/`; see `.claude/SKILLS.md` for the short index.
 
-For the exact implementation prompt sequence, use `docs/claude-code-implementation-prompts.md` or `.claude/prompts/implementation-order.md`.
+For the exact implementation prompt sequence, use `docs/claude-code-implementation-prompts.md`, `docs/poc-e2e-implementation-prompts.md`, or `.claude/prompts/implementation-order.md`.
 
 ## Agent Roster
 

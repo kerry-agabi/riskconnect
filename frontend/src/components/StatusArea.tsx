@@ -17,12 +17,25 @@ export interface TerminalResult {
 interface StatusAreaProps {
   active?: ActiveProcessing | null;
   result?: TerminalResult | null;
+  onViewSummary?: (submissionId: string) => void;
+  onRetry?: () => void;
 }
 
-export function StatusArea({ active = null, result = null }: StatusAreaProps) {
+export function StatusArea({
+  active = null,
+  result = null,
+  onViewSummary,
+  onRetry,
+}: StatusAreaProps) {
   // Show terminal result if processing is complete
   if (result) {
-    return <TerminalResultCard result={result} />;
+    return (
+      <TerminalResultCard
+        result={result}
+        onViewSummary={onViewSummary}
+        onRetry={onRetry}
+      />
+    );
   }
 
   if (!active) {
@@ -64,8 +77,16 @@ export function StatusArea({ active = null, result = null }: StatusAreaProps) {
   );
 }
 
-function TerminalResultCard({ result }: { result: TerminalResult }) {
-  const { status, fileName, error } = result;
+function TerminalResultCard({
+  result,
+  onViewSummary,
+  onRetry,
+}: {
+  result: TerminalResult;
+  onViewSummary?: (submissionId: string) => void;
+  onRetry?: () => void;
+}) {
+  const { status, fileName, error, submissionId } = result;
 
   if (status === "READY") {
     return (
@@ -85,7 +106,11 @@ function TerminalResultCard({ result }: { result: TerminalResult }) {
             Triage brief and extracted data are ready for review.
           </p>
         </div>
-        <button type="button" className="btn btn-primary" disabled>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => onViewSummary?.(submissionId)}
+        >
           View Summary
         </button>
       </section>
@@ -111,7 +136,11 @@ function TerminalResultCard({ result }: { result: TerminalResult }) {
             review is needed before the brief can be finalized.
           </p>
         </div>
-        <button type="button" className="btn btn-secondary" disabled>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => onViewSummary?.(submissionId)}
+        >
           Review Submission
         </button>
       </section>
@@ -135,6 +164,11 @@ function TerminalResultCard({ result }: { result: TerminalResult }) {
         </p>
         {error && <p className="status-result-error">{error}</p>}
       </div>
+      {onRetry && (
+        <button type="button" className="btn btn-secondary" onClick={onRetry}>
+          Try Again
+        </button>
+      )}
     </section>
   );
 }

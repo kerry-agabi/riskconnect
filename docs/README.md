@@ -21,6 +21,7 @@ RiskLens is a senior GenAI application developer practice project for an insuran
 - [AWS CLI Setup In VS Code](aws-cli-vscode-setup.md)
 - [GitHub CI/CD Setup](github-cicd-setup.md)
 - [Claude Code Implementation Prompts](claude-code-implementation-prompts.md)
+- [POC E2E Implementation Prompts](poc-e2e-implementation-prompts.md)
 - [Security and Governance](security-governance.md)
 - [Cost Plan](cost-plan.md)
 - [Low-Budget AWS Notes](aws-free-tier-low-budget-notes.md)

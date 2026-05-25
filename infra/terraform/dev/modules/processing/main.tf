@@ -144,10 +144,27 @@ data "aws_iam_policy_document" "worker" {
       "textract:AnalyzeDocument",
       "textract:DetectDocumentText",
       "textract:GetDocumentAnalysis",
+      "textract:GetDocumentTextDetection",
       "textract:StartDocumentAnalysis",
+      "textract:StartDocumentTextDetection",
     ]
 
     resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+
+    resources = [
+      var.submissions_table_arn,
+      var.hazards_table_arn,
+    ]
   }
 }
 
@@ -167,7 +184,7 @@ resource "aws_lambda_function" "worker" {
   function_name                  = "${var.name_prefix}-worker"
   role                           = aws_iam_role.worker.arn
   runtime                        = "python3.12"
-  handler                        = "worker_placeholder.handler"
+  handler                        = "worker_handler.handler"
   filename                       = var.worker_lambda_package_path
   source_code_hash               = try(filebase64sha256(var.worker_lambda_package_path), null)
   timeout                        = 300
@@ -177,7 +194,11 @@ resource "aws_lambda_function" "worker" {
   environment {
     variables = {
       AWS_ACCOUNT_ID     = var.aws_account_id
+      BEDROCK_MODEL_ID   = "anthropic.claude-3-haiku-20240307-v1:0"
+      HAZARDS_TABLE      = var.hazards_table_name
+      S3_BUCKET          = aws_s3_bucket.submissions.bucket
       SUBMISSIONS_BUCKET = aws_s3_bucket.submissions.bucket
+      SUBMISSIONS_TABLE  = var.submissions_table_name
       QUEUE_URL          = aws_sqs_queue.processing.url
       LOG_LEVEL          = "INFO"
     }
@@ -192,8 +213,9 @@ resource "aws_lambda_function" "worker" {
 }
 
 resource "aws_lambda_event_source_mapping" "processing" {
-  event_source_arn = aws_sqs_queue.processing.arn
-  function_name    = aws_lambda_function.worker.arn
-  batch_size       = 1
-  enabled          = true
+  event_source_arn        = aws_sqs_queue.processing.arn
+  function_name           = aws_lambda_function.worker.arn
+  batch_size              = 5
+  function_response_types = ["ReportBatchItemFailures"]
+  enabled                 = true
 }

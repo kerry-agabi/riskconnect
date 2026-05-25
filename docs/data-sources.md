@@ -77,3 +77,17 @@ For local development, allow these scripts to write to `data/raw/` and `data/pro
 - Do not claim the AI output is a rating, recommendation to bind, or actuarial model.
 - Surface missing or stale data in the UI instead of hiding it.
 
+## POC Seed Command
+
+For the deployed proof of concept, use the fixed public Los Angeles certificate
+of occupancy PDF and compact Los Angeles County hazard seed:
+
+```powershell
+python backend/scripts/prepare_poc_data.py
+python backend/scripts/prepare_poc_data.py --hazards-table riskconnect-dev-hazards --region eu-west-1
+```
+
+The first command writes the public PDF to `data/raw/` and the compact hazard
+record to `data/processed/`. The second command also loads the hazard record
+into the Terraform-managed DynamoDB hazard table. Both local data directories
+are git-ignored.

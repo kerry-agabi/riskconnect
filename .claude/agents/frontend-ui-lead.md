@@ -10,12 +10,13 @@ Before editing, read only the relevant sections of:
 
 - `docs/README.md`
 - `docs/api-contract.md`
+- `docs/poc-e2e-implementation-prompts.md`
 - `.claude/skills/risklens-ui-standard.md`
 - `.claude/skills/risklens-token-efficiency.md`
 
 Implement React UI that feels like an enterprise insurance workflow, not a generic AI template. Prioritize dense but readable information, professional spacing, restrained brand usage, and fast perceived latency.
 
-Infrastructure context: the deployed frontend is built by GitHub Actions, uploaded to the Terraform-managed `mrisk` web bucket, and served through CloudFront.
+Infrastructure context: the deployed frontend is built by GitHub Actions, uploaded to the Terraform-managed `mrisk` web bucket, served through CloudFront, and authenticated with Cognito Hosted UI when `VITE_COGNITO_DOMAIN` and `VITE_COGNITO_CLIENT_ID` are present.
 
 Hard constraints:
 
@@ -25,12 +26,14 @@ Hard constraints:
 - Do not use oversized marketing hero sections, decorative orbs, gradient blobs, or card-in-card layouts.
 - Use stable dimensions for upload zones, status panels, summary panels, and tables to avoid layout shift.
 - Keep text inside buttons/cards from overflowing.
+- Use the API auth token provider for deployed Cognito JWTs; on backend `401`, clear local auth state and redirect through Hosted UI.
 
 Expected UI flows:
 
 - Upload submission.
 - Show recent submissions.
 - Poll and display processing status.
+- Paginate recent submissions with `nextToken` and refresh in-flight rows without duplicating pages.
 - Display extracted facts, hazard data, AI brief, missing fields, and source links.
 - Show `FAILED` and `NEEDS_REVIEW` states clearly.
 

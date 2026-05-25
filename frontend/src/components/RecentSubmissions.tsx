@@ -19,8 +19,17 @@ export interface SubmissionRow {
 interface RecentSubmissionsProps {
   submissions?: SubmissionRow[];
   loading?: boolean;
+  loadingMore?: boolean;
   error?: string | null;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  onSelect?: (submissionId: string) => void;
 }
+
+const REVIEWABLE: ReadonlySet<SubmissionStatus> = new Set([
+  "READY",
+  "NEEDS_REVIEW",
+]);
 
 function getStatusBadgeClass(status: SubmissionStatus): string {
   switch (status) {
@@ -78,7 +87,11 @@ function SkeletonRows() {
 export function RecentSubmissions({
   submissions = [],
   loading = false,
+  loadingMore = false,
   error = null,
+  hasMore = false,
+  onLoadMore,
+  onSelect,
 }: RecentSubmissionsProps) {
   return (
     <section
@@ -102,34 +115,70 @@ export function RecentSubmissions({
       )}
 
       {!loading && !error && submissions.length > 0 && (
-        <div className="table-wrapper">
-          <table className="submissions-table">
-            <thead>
-              <tr>
-                <th scope="col">File Name</th>
-                <th scope="col">Status</th>
-                <th scope="col">Submitted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map((sub) => (
-                <tr key={sub.submissionId}>
-                  <td className="cell-filename" title={sub.fileName}>
-                    {sub.fileName}
-                  </td>
-                  <td>
-                    <span className={getStatusBadgeClass(sub.status)}>
-                      {formatStatusLabel(sub.status)}
-                    </span>
-                  </td>
-                  <td className="cell-date">
-                    {formatDate(sub.createdAt)}
-                  </td>
+        <>
+          <div className="table-wrapper">
+            <table className="submissions-table">
+              <thead>
+                <tr>
+                  <th scope="col">File Name</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Submitted</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {submissions.map((sub) => {
+                  const reviewable = onSelect && REVIEWABLE.has(sub.status);
+                  return (
+                    <tr
+                      key={sub.submissionId}
+                      className={reviewable ? "submissions-row--clickable" : undefined}
+                      onClick={
+                        reviewable ? () => onSelect(sub.submissionId) : undefined
+                      }
+                      tabIndex={reviewable ? 0 : undefined}
+                      role={reviewable ? "button" : undefined}
+                      aria-label={
+                        reviewable ? `Open triage brief for ${sub.fileName}` : undefined
+                      }
+                      onKeyDown={
+                        reviewable
+                          ? (e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onSelect(sub.submissionId);
+                              }
+                            }
+                          : undefined
+                      }
+                    >
+                      <td className="cell-filename" title={sub.fileName}>
+                        {sub.fileName}
+                      </td>
+                      <td>
+                        <span className={getStatusBadgeClass(sub.status)}>
+                          {formatStatusLabel(sub.status)}
+                        </span>
+                      </td>
+                      <td className="cell-date">{formatDate(sub.createdAt)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {hasMore && onLoadMore && (
+            <div className="submissions-footer">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={onLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </section>
   );

@@ -100,3 +100,15 @@ variable "force_destroy_buckets" {
   type        = bool
   default     = false
 }
+
+variable "cognito_callback_urls" {
+  description = "Allowed Cognito Hosted UI callback URLs."
+  type        = list(string)
+  default     = ["http://localhost:5173"]
+}
+
+variable "cognito_logout_urls" {
+  description = "Allowed Cognito Hosted UI logout URLs."
+  type        = list(string)
+  default     = ["http://localhost:5173"]
+}

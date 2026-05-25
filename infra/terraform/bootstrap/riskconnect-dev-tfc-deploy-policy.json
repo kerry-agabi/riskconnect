@@ -9,6 +9,7 @@
         "budgets:*",
         "cloudfront:*",
         "cloudwatch:*",
+        "cognito-idp:*",
         "dynamodb:*",
         "lambda:*",
         "logs:*",

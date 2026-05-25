@@ -2,6 +2,8 @@
 
 Use this runbook from the repository root when implementing the RiskLens MVP with Claude Code. Each prompt is intentionally narrow so agents stay token-efficient and deliver one verifiable slice at a time.
 
+For the deployed POC path now that infrastructure exists, use `docs/poc-e2e-implementation-prompts.md`. The active product stack label is `STACK_NAME=mrisk`; the HCP Terraform workspace remains `riskconnect-dev`.
+
 ## Before You Start
 
 Confirm these files exist:
@@ -13,7 +15,7 @@ Confirm these files exist:
 - `.claude/commands/*.md`
 - `docs/delivery-tasks.md`
 
-Do not run live AWS deploy commands until local checks, Terraform validation, budget alarms, HCP Terraform workload identity, and GitHub OIDC are ready.
+Do not run live AWS deploy commands until local checks, Terraform validation, budget alarms, HCP Terraform workload identity, GitHub OIDC, Cognito callback URLs, and Bedrock/Textract permissions are ready.
 
 ## Startup Prompt
 
@@ -68,7 +70,7 @@ Run the narrowest available checks and report verification.
 ### 5. Frontend API Integration
 
 ```text
-/mvp-frontend Wire the upload and status polling flow to the documented API contract. Add typed API client modules, loading/error states, READY/NEEDS_REVIEW/FAILED UI states, and responsive result placeholders. Keep UI polished and enterprise-grade.
+/mvp-frontend Wire the upload and status polling flow to the documented API contract. Add typed API client modules, Cognito-aware deployed auth, loading/error states, READY/NEEDS_REVIEW/FAILED UI states, paginated recent submissions, and responsive result placeholders. Keep UI polished and enterprise-grade.
 ```
 
 ### 6. Worker Processing Backbone
@@ -104,7 +106,7 @@ Implement Bedrock prompt modules, JSON schemas, schema validation, one repair re
 ```text
 Use the devops-release-lead subagent.
 
-Maintain the manual dev deploy workflow using HCP Terraform for apply and GitHub OIDC for frontend artifact deployment. Keep CI separate from deploy. Do not add static AWS keys. Document required repo variables/secrets, including STACK_NAME=mrisk.
+Maintain the manual dev deploy workflow using HCP Terraform for apply and GitHub OIDC for frontend artifact deployment. Keep CI separate from deploy unless the user explicitly asks for automatic dev deployment. Do not add static AWS keys. Document required repo variables/secrets, including STACK_NAME=mrisk, TERRAFORM_PROJECT_NAME, AWS_REGION, and TFC_API_TOKEN.
 ```
 
 ### 11. End-To-End Demo Hardening

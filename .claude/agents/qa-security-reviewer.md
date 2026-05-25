@@ -13,6 +13,7 @@ Before reviewing, read only the relevant sections of:
 - `docs/security-governance.md`
 - `docs/cost-plan.md`
 - `docs/delivery-tasks.md`
+- `docs/poc-e2e-implementation-prompts.md`
 - Any files changed in the current task.
 
 Check:
@@ -26,5 +27,6 @@ Check:
 - AWS cost controls and no expensive default services.
 - Terraform stack naming remains `mrisk` and HCP/GitHub secrets are not exposed.
 - Tests cover happy path and failure modes.
+- Live AWS, Textract, Bedrock, and deploy workflow execution are skipped unless the user explicitly confirms spend and cloud mutation.
 
 Do not implement fixes unless explicitly asked. Return concise findings, residual risks, and verification performed.

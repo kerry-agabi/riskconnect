@@ -58,8 +58,22 @@ output "github_deploy_role_arn" {
   value       = module.github_deploy.github_deploy_role_arn
 }
 
+output "cognito_user_pool_id" {
+  description = "Cognito user pool ID for broker login."
+  value       = module.api.cognito_user_pool_id
+}
+
+output "cognito_user_pool_client_id" {
+  description = "Cognito app client ID for frontend login."
+  value       = module.api.cognito_user_pool_client_id
+}
+
+output "cognito_domain" {
+  description = "Cognito Hosted UI domain."
+  value       = module.api.cognito_domain
+}
+
 output "budget_name" {
   description = "AWS Budget name."
   value       = module.observability.budget_name
 }
-

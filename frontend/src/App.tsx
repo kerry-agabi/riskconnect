@@ -1,23 +1,56 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "./components/AppShell";
 import { UploadPanel } from "./components/UploadPanel";
 import { RecentSubmissions } from "./components/RecentSubmissions";
 import { StatusArea } from "./components/StatusArea";
 import type { ActiveProcessing, TerminalResult } from "./components/StatusArea";
+import { SummaryPanel } from "./components/SummaryPanel";
 import { useSubmissionUpload } from "./hooks/useSubmissionUpload";
 import { useSubmissions } from "./hooks/useSubmissions";
+import { useSubmissionSummary } from "./hooks/useSubmissionSummary";
 import { TERMINAL_STATUSES } from "./api/types";
+import { installCognitoAuth } from "./auth/cognito";
 
 export function App() {
+  useEffect(() => {
+    void installCognitoAuth();
+  }, []);
+
   const {
     submissions,
     loading: submissionsLoading,
+    loadingMore: submissionsLoadingMore,
     error: submissionsError,
+    hasMore: submissionsHasMore,
     refresh: refreshSubmissions,
+    loadMore: loadMoreSubmissions,
   } = useSubmissions();
 
   const { upload, state, progress, error, submission, reset } =
     useSubmissionUpload(refreshSubmissions);
+
+  const [selectedSummaryId, setSelectedSummaryId] = useState<string | null>(
+    null,
+  );
+  const {
+    summary,
+    loading: summaryLoading,
+    error: summaryError,
+    reload: reloadSummary,
+  } = useSubmissionSummary(selectedSummaryId);
+
+  const handleViewSummary = useCallback((submissionId: string) => {
+    setSelectedSummaryId(submissionId);
+  }, []);
+
+  const handleCloseSummary = useCallback(() => {
+    setSelectedSummaryId(null);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setSelectedSummaryId(null);
+    reset();
+  }, [reset]);
 
   // Derive active processing state for the StatusArea progress bar
   const activeProcessing: ActiveProcessing | null = useMemo(() => {
@@ -80,13 +113,31 @@ export function App() {
             uploadError={error}
             onReset={reset}
           />
-          <StatusArea active={activeProcessing} result={terminalResult} />
+          <StatusArea
+            active={activeProcessing}
+            result={terminalResult}
+            onViewSummary={handleViewSummary}
+            onRetry={handleRetry}
+          />
+          {selectedSummaryId && (
+            <SummaryPanel
+              summary={summary}
+              loading={summaryLoading}
+              error={summaryError}
+              onRetry={reloadSummary}
+              onClose={handleCloseSummary}
+            />
+          )}
         </div>
         <div className="workbench-right">
           <RecentSubmissions
             submissions={submissionRows}
             loading={submissionsLoading}
+            loadingMore={submissionsLoadingMore}
             error={submissionsError}
+            hasMore={submissionsHasMore}
+            onLoadMore={loadMoreSubmissions}
+            onSelect={handleViewSummary}
           />
         </div>
       </div>

@@ -25,6 +25,7 @@ cdk.out/
 !.env.example
 .claude/settings.local.json
 data/raw/
+data/processed/
 data/private/
 
 # OS/editor

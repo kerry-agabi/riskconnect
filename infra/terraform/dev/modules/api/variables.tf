@@ -8,6 +8,11 @@ variable "aws_region" {
   type        = string
 }
 
+variable "aws_account_id" {
+  description = "AWS account ID."
+  type        = string
+}
+
 variable "api_lambda_package_path" {
   description = "Path to the API Lambda zip package."
   type        = string
@@ -53,6 +58,16 @@ variable "hazards_table_name" {
   type        = string
 }
 
+variable "cognito_callback_urls" {
+  description = "Allowed Cognito Hosted UI callback URLs."
+  type        = list(string)
+}
+
+variable "cognito_logout_urls" {
+  description = "Allowed Cognito Hosted UI logout URLs."
+  type        = list(string)
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log retention in days."
   type        = number
@@ -63,4 +78,3 @@ variable "tags" {
   description = "Common tags."
   type        = map(string)
 }
-

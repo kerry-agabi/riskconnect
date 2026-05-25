@@ -2,6 +2,9 @@
 
 Use this when starting a fresh Claude Code implementation session for RiskLens.
 
+For the deployed proof-of-concept path after infrastructure is available, use
+`docs/poc-e2e-implementation-prompts.md`.
+
 First:
 
 ```text

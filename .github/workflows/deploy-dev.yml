@@ -56,8 +56,24 @@ jobs:
             echo "CLOUDFRONT_DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)"
             echo "FRONTEND_URL=$(terraform output -raw frontend_url)"
             echo "GITHUB_DEPLOY_ROLE_ARN=$(terraform output -raw github_deploy_role_arn)"
+            echo "VITE_COGNITO_DOMAIN=$(terraform output -raw cognito_domain)"
+            echo "VITE_COGNITO_CLIENT_ID=$(terraform output -raw cognito_user_pool_client_id)"
           } >> "$GITHUB_ENV"
         working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform apply frontend callback URLs
+        shell: bash
+        run: >
+          terraform apply -auto-approve -input=false
+          -var="project_name=${TERRAFORM_PROJECT_NAME}"
+          -var="cognito_callback_urls=[\"${FRONTEND_URL}\",\"http://localhost:5173\"]"
+          -var="cognito_logout_urls=[\"${FRONTEND_URL}\",\"http://localhost:5173\"]"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Export frontend auth env
+        run: |
+          echo "VITE_COGNITO_REDIRECT_URI=$FRONTEND_URL" >> "$GITHUB_ENV"
+          echo "VITE_COGNITO_LOGOUT_URI=$FRONTEND_URL" >> "$GITHUB_ENV"
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:

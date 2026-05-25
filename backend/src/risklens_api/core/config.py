@@ -25,6 +25,22 @@ class Settings(BaseModel):
         "",
         description="SQS queue URL for dispatching async processing jobs.",
     )
+    submissions_table: str = Field(
+        "",
+        description="DynamoDB table name for submission metadata and summaries.",
+    )
+    hazards_table: str = Field(
+        "",
+        description="DynamoDB table name for county hazard cache records.",
+    )
+    bedrock_model_id: str = Field(
+        "anthropic.claude-3-haiku-20240307-v1:0",
+        description="Amazon Bedrock model ID for extraction and triage brief generation.",
+    )
+    bedrock_max_input_chars: int = Field(
+        8000,
+        description="Maximum extracted text characters sent to Bedrock per task.",
+    )
     aws_region: str = Field(
         "us-east-1",
         description="AWS region for all service clients.",
@@ -49,7 +65,15 @@ def get_settings() -> Settings:
         app_name=os.environ.get("APP_NAME", "RiskLens API"),
         s3_bucket=os.environ.get("S3_BUCKET", "risklens-submissions-dev"),
         sqs_queue_url=os.environ.get("SQS_QUEUE_URL", ""),
+        submissions_table=os.environ.get(
+            "SUBMISSIONS_TABLE", os.environ.get("DYNAMODB_TABLE", "")
+        ),
+        hazards_table=os.environ.get("HAZARDS_TABLE", ""),
         aws_region=os.environ.get("AWS_REGION", "us-east-1"),
+        bedrock_model_id=os.environ.get(
+            "BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"
+        ),
+        bedrock_max_input_chars=int(os.environ.get("BEDROCK_MAX_INPUT_CHARS", "8000")),
         max_file_size_bytes=int(os.environ.get("MAX_FILE_SIZE_BYTES", "10000000")),
         upload_expiry_seconds=int(os.environ.get("UPLOAD_EXPIRY_SECONDS", "900")),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),

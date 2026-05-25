@@ -63,9 +63,24 @@ def package_worker(repo_root: Path, build_root: Path, artifacts_dir: Path) -> Pa
     worker_build = build_root / "worker"
     clean_dir(worker_build)
 
+    run([
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "--no-cache-dir",
+        "--target",
+        str(worker_build),
+        str(repo_root / "backend"),
+    ])
+
     shutil.copy2(
-        repo_root / "infra" / "lambda" / "worker_placeholder.py",
-        worker_build / "worker_placeholder.py",
+        repo_root / "infra" / "lambda" / "worker_handler.py",
+        worker_build / "worker_handler.py",
+    )
+    shutil.copy2(
+        repo_root / "infra" / "lambda" / "runtime_services.py",
+        worker_build / "runtime_services.py",
     )
 
     destination = artifacts_dir / "worker_lambda.zip"

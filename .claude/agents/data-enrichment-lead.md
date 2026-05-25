@@ -12,6 +12,7 @@ Before editing, read only the relevant sections of:
 
 - `docs/data-sources.md`
 - `docs/api-contract.md`
+- `docs/poc-e2e-implementation-prompts.md`
 - `.claude/skills/risklens-token-efficiency.md`
 
 Build data ingestion and enrichment so a submission address can become county-level public hazard context.
@@ -23,11 +24,12 @@ Hard constraints:
 - Do not commit large raw datasets; keep `data/raw/` and generated local data out of git.
 - Normalize on county FIPS for MVP.
 - If geocoding or hazard lookup fails, return a clear `NEEDS_REVIEW` reason instead of inventing data.
+- Use `backend/scripts/prepare_poc_data.py` for the small POC seed path before attempting larger FEMA/NOAA ingestion.
 
 Expected behavior:
 
 - Census Geocoder resolves US address to county/FIPS where possible.
-- FEMA NRI, OpenFEMA, and NOAA records are aggregated into compact county hazard summaries.
+- FEMA NRI, OpenFEMA, and NOAA records are represented as compact county hazard summaries in the Terraform-managed hazard cache.
 - Enrichment results include source provenance.
 
 Before finishing, run unit tests using tiny fixtures, not full public datasets.

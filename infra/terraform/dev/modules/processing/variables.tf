@@ -18,6 +18,26 @@ variable "worker_lambda_package_path" {
   type        = string
 }
 
+variable "submissions_table_name" {
+  description = "DynamoDB submissions table name."
+  type        = string
+}
+
+variable "submissions_table_arn" {
+  description = "DynamoDB submissions table ARN."
+  type        = string
+}
+
+variable "hazards_table_name" {
+  description = "DynamoDB hazards table name."
+  type        = string
+}
+
+variable "hazards_table_arn" {
+  description = "DynamoDB hazards table ARN."
+  type        = string
+}
+
 variable "worker_reserved_concurrency" {
   description = "Optional reserved concurrency for the async worker Lambda. Null leaves concurrency in the account-level unreserved pool."
   type        = number

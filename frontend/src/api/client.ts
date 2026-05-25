@@ -4,6 +4,7 @@ import type {
   StartProcessingRequest,
   StartProcessingResponse,
   SubmissionStatusResponse,
+  SubmissionSummaryResponse,
   SubmissionListResponse,
   ListSubmissionsParams,
   ApiErrorResponse,
@@ -12,8 +13,50 @@ import { ApiError } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+/**
+ * Auth-token seam. Deployed environments inject a Cognito JWT here so the
+ * client sends `Authorization: Bearer <token>` on every backend request.
+ * Local/dev leaves this unset and requests go out unauthenticated.
+ */
+type TokenProvider = () => string | null | undefined | Promise<string | null | undefined>;
+
+let tokenProvider: TokenProvider | null = null;
+let unauthorizedHandler: (() => void | Promise<void>) | null = null;
+
+export function setAuthTokenProvider(provider: TokenProvider | null): void {
+  tokenProvider = provider;
+}
+
+export function setUnauthorizedHandler(
+  handler: (() => void | Promise<void>) | null,
+): void {
+  unauthorizedHandler = handler;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  if (!tokenProvider) return {};
+  const token = await tokenProvider();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/**
+ * fetch wrapper for backend (`/api`) requests. Injects auth + JSON handling.
+ * Not used for the direct S3 presigned PUT, which must not carry our headers.
+ */
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const auth = await authHeaders();
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers: { ...auth, ...(init?.headers ?? {}) },
+  });
+  return handleResponse<T>(response);
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    if (response.status === 401 && unauthorizedHandler) {
+      await unauthorizedHandler();
+    }
     let message = `Request failed with status ${response.status}`;
     let code: string | undefined;
     try {
@@ -34,12 +77,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
 export async function requestUploadUrl(
   request: UploadUrlRequest,
 ): Promise<UploadUrlResponse> {
-  const response = await fetch(`${BASE_URL}/submissions/upload-url`, {
+  return apiFetch<UploadUrlResponse>("/submissions/upload-url", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
   });
-  return handleResponse<UploadUrlResponse>(response);
 }
 
 /**
@@ -70,15 +112,14 @@ export async function startProcessing(
   submissionId: string,
   request: StartProcessingRequest,
 ): Promise<StartProcessingResponse> {
-  const response = await fetch(
-    `${BASE_URL}/submissions/${submissionId}/start`,
+  return apiFetch<StartProcessingResponse>(
+    `/submissions/${submissionId}/start`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
     },
   );
-  return handleResponse<StartProcessingResponse>(response);
 }
 
 /**
@@ -87,11 +128,22 @@ export async function startProcessing(
 export async function getSubmissionStatus(
   submissionId: string,
 ): Promise<SubmissionStatusResponse> {
-  const response = await fetch(
-    `${BASE_URL}/submissions/${submissionId}`,
+  return apiFetch<SubmissionStatusResponse>(`/submissions/${submissionId}`, {
+    method: "GET",
+  });
+}
+
+/**
+ * Get the full triage summary for a submission.
+ * Only valid once status is READY or NEEDS_REVIEW.
+ */
+export async function getSubmissionSummary(
+  submissionId: string,
+): Promise<SubmissionSummaryResponse> {
+  return apiFetch<SubmissionSummaryResponse>(
+    `/submissions/${submissionId}/summary`,
     { method: "GET" },
   );
-  return handleResponse<SubmissionStatusResponse>(response);
 }
 
 /**
@@ -106,7 +158,8 @@ export async function listSubmissions(
   if (params?.nextToken) searchParams.set("nextToken", params.nextToken);
 
   const query = searchParams.toString();
-  const url = `${BASE_URL}/submissions${query ? `?${query}` : ""}`;
-  const response = await fetch(url, { method: "GET" });
-  return handleResponse<SubmissionListResponse>(response);
+  return apiFetch<SubmissionListResponse>(
+    `/submissions${query ? `?${query}` : ""}`,
+    { method: "GET" },
+  );
 }

@@ -5,6 +5,7 @@
 - Stack name: `mrisk`.
 - Resource names: `mrisk-{env}-{purpose}` where global uniqueness permits.
 - Tags: `Project=mrisk`, `Environment`, `Owner`, `CostCenter=LearningMVP`, `ManagedBy=Terraform`.
+- HCP Terraform workspace remains `riskconnect-dev`; document any temporary `TERRAFORM_PROJECT_NAME=riskconnect` old-role fallback separately from the product stack label.
 
 ## Cost Constraints
 
@@ -19,10 +20,11 @@
 - Use encryption at rest.
 - Scope IAM to prefixes and specific actions.
 - Use HCP Terraform workload identity for Terraform applies and GitHub OIDC for frontend artifact deployment.
+- Use Cognito Hosted UI plus HTTP API JWT authorizers for deployed API access.
 - Never store AWS access keys in repo or workflow secrets unless explicitly approved as a temporary fallback.
 
 ## Deployment
 
 - `terraform fmt`, `terraform init -backend=false`, and `terraform validate` are safe for routine validation.
 - `terraform apply`, `terraform destroy`, bootstrap changes, and deploy workflow dispatch require explicit user confirmation.
-- Manual deploy workflow only for MVP.
+- Manual deploy workflow only for MVP unless the user explicitly asks for automatic dev deployment.

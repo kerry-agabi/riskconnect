@@ -12,6 +12,7 @@ The active AWS infrastructure is Terraform under `infra/terraform`.
 - HCP Terraform workspace: `riskconnect-dev`
 - AWS account: `178002661103`
 - AWS region: `eu-west-1`
+- Auth: Cognito Hosted UI and HTTP API JWT authorizer
 
 The CDK scaffold under `infra/cdk/` is retained only as legacy reference.
 
@@ -42,6 +43,7 @@ The dev root keeps modules under `dev/modules/` so HCP Terraform receives them i
 | --- | --- | --- |
 | S3 | Static app, raw submissions, results | Low cost for MVP volumes. |
 | CloudFront | Fast frontend delivery | Free tier friendly for low traffic. |
+| Cognito | Broker login for deployed POC | Hosted UI avoids custom auth UI for MVP. |
 | API Gateway HTTP API | Low-latency API | Cheaper than REST API for MVP. |
 | Lambda | API handlers and async processing | Pay per request/duration. |
 | SQS | Decoupled processing queue and DLQ | Very low cost. |

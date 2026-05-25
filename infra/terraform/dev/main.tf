@@ -26,6 +26,10 @@ module "processing" {
   name_prefix                 = local.name_prefix
   aws_account_id              = var.aws_account_id
   aws_region                  = var.aws_region
+  hazards_table_arn           = module.data.hazards_table_arn
+  hazards_table_name          = module.data.hazards_table_name
+  submissions_table_arn       = module.data.submissions_table_arn
+  submissions_table_name      = module.data.submissions_table_name
   worker_lambda_package_path  = local.worker_lambda_package_path
   worker_reserved_concurrency = var.worker_reserved_concurrency
   log_retention_days          = var.log_retention_days
@@ -37,6 +41,7 @@ module "api" {
   source = "./modules/api"
 
   name_prefix             = local.name_prefix
+  aws_account_id          = var.aws_account_id
   aws_region              = var.aws_region
   api_lambda_package_path = local.api_lambda_package_path
   log_retention_days      = var.log_retention_days
@@ -50,6 +55,9 @@ module "api" {
   submissions_table_name = module.data.submissions_table_name
   hazards_table_arn      = module.data.hazards_table_arn
   hazards_table_name     = module.data.hazards_table_name
+
+  cognito_callback_urls = var.cognito_callback_urls
+  cognito_logout_urls   = var.cognito_logout_urls
 
   tags = local.tags
 }

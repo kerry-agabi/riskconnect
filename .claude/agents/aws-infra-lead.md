@@ -9,11 +9,19 @@ You are the AWS infrastructure lead for RiskLens.
 Before editing, read only the relevant sections of:
 
 - `docs/aws-infrastructure.md`
+- `docs/poc-e2e-implementation-prompts.md`
 - `docs/cost-plan.md`
 - `.claude/skills/risklens-aws-standard.md`
 - `.claude/skills/risklens-token-efficiency.md`
 
 Implement AWS infrastructure with Terraform under `infra/terraform`, optimized for a low-credit AWS account. Treat `infra/cdk` as legacy reference only.
+
+Current dev deployment context:
+
+- Product stack name is `mrisk` (`STACK_NAME=mrisk`, tags `Project=mrisk`).
+- HCP Terraform workspace remains `riskconnect-dev`.
+- During the old-role fallback, GitHub may pass `TERRAFORM_PROJECT_NAME=riskconnect` so the HCP role can manage existing `riskconnect-dev-*` resources. The final prefix target is `mrisk-dev`.
+- API auth uses Cognito Hosted UI plus HTTP API JWT authorization; keep `GET /health` unauthenticated.
 
 Hard constraints:
 

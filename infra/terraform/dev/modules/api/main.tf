@@ -13,6 +13,56 @@ data "aws_iam_policy_document" "api_assume_role" {
   }
 }
 
+resource "aws_cognito_user_pool" "broker" {
+  name = "${var.name_prefix}-brokers"
+
+  auto_verified_attributes = ["email"]
+  username_attributes      = ["email"]
+
+  password_policy {
+    minimum_length    = 12
+    require_lowercase = true
+    require_numbers   = true
+    require_symbols   = false
+    require_uppercase = true
+  }
+
+  tags = var.tags
+}
+
+resource "aws_cognito_user_pool_client" "frontend" {
+  name         = "${var.name_prefix}-frontend"
+  user_pool_id = aws_cognito_user_pool.broker.id
+
+  generate_secret                      = false
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_scopes                 = ["email", "openid", "profile"]
+  callback_urls                        = var.cognito_callback_urls
+  logout_urls                          = var.cognito_logout_urls
+  supported_identity_providers         = ["COGNITO"]
+
+  explicit_auth_flows = [
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_USER_SRP_AUTH",
+  ]
+
+  access_token_validity  = 60
+  id_token_validity      = 60
+  refresh_token_validity = 1
+
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
+  }
+}
+
+resource "aws_cognito_user_pool_domain" "frontend" {
+  domain       = "${var.name_prefix}-auth-${var.aws_account_id}"
+  user_pool_id = aws_cognito_user_pool.broker.id
+}
+
 resource "aws_iam_role" "api" {
   name               = "${var.name_prefix}-api-lambda"
   assume_role_policy = data.aws_iam_policy_document.api_assume_role.json
@@ -143,9 +193,29 @@ resource "aws_apigatewayv2_integration" "api" {
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_authorizer" "cognito" {
+  api_id           = aws_apigatewayv2_api.api.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.name_prefix}-cognito"
+
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.frontend.id]
+    issuer   = "https://${aws_cognito_user_pool.broker.endpoint}"
+  }
+}
+
 resource "aws_apigatewayv2_route" "default" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "$default"
+  target             = "integrations/${aws_apigatewayv2_integration.api.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "$default"
+  route_key = "GET /health"
   target    = "integrations/${aws_apigatewayv2_integration.api.id}"
 }
 

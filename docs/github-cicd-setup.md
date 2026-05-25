@@ -40,6 +40,13 @@ GitHub Actions should not store static AWS keys.
 
 `STACK_NAME` is the product/stack label used by CI. `TERRAFORM_PROJECT_NAME` is the Terraform AWS resource prefix passed to `project_name`. While using the old `riskconnect-dev-tfc-deploy` role, keep `TERRAFORM_PROJECT_NAME=riskconnect` so Terraform manages `riskconnect-dev-*` resources instead of trying to create `mrisk-dev-*` IAM roles.
 
+The deploy workflow reads Cognito outputs after Terraform apply and injects these Vite build variables automatically:
+
+- `VITE_COGNITO_DOMAIN`
+- `VITE_COGNITO_CLIENT_ID`
+- `VITE_COGNITO_REDIRECT_URI`
+- `VITE_COGNITO_LOGOUT_URI`
+
 ## Required HCP Terraform Workspace Configuration
 
 Set these environment variables in the HCP Terraform workspace `riskconnect-dev`:
@@ -88,10 +95,11 @@ Deploy flow:
 2. Install Python, Node, and Terraform.
 3. Package API and worker Lambda artifacts into `infra/terraform/dev/artifacts/`.
 4. Run Terraform CLI against HCP Terraform using `TERRAFORM_PROJECT_NAME` as the AWS resource prefix.
-5. Read Terraform outputs for the web bucket, CloudFront distribution, frontend URL, and GitHub deploy role ARN.
-6. Assume the GitHub OIDC deploy role.
-7. Build and upload the frontend.
-8. Invalidate CloudFront.
+5. Read Terraform outputs for the web bucket, CloudFront distribution, frontend URL, Cognito domain/client, and GitHub deploy role ARN.
+6. Re-apply Terraform with the CloudFront frontend URL as an allowed Cognito callback/logout URL.
+7. Assume the GitHub OIDC deploy role.
+8. Build and upload the frontend with Cognito Vite env vars.
+9. Invalidate CloudFront.
 
 ## Bootstrap
 
@@ -115,6 +123,7 @@ Before running `deploy-dev`:
 - HCP Terraform token is a team/user token, not an organization token.
 - HCP workspace has `TFC_AWS_PROVIDER_AUTH=true`.
 - HCP workspace has the current `riskconnect-dev-tfc-deploy` fallback role ARN, or the verified `mrisk-dev-tfc-deploy` final role ARN.
+- Cognito callback/logout URLs include the deployed CloudFront frontend URL after the deploy workflow's second Terraform apply.
 - AWS budget alert exists.
 - Bedrock model access is confirmed if live GenAI processing is enabled.
 - No real client data is present in fixtures or artifacts.

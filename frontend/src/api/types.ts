@@ -71,6 +71,61 @@ export interface SubmissionStatusResponse {
   error: string | null;
 }
 
+// GET /api/submissions/{submissionId}/summary
+// Only available for READY or NEEDS_REVIEW.
+export interface ExtractedAddress {
+  line1?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  countyFips?: string;
+}
+
+export interface ExtractedLimits {
+  building?: number;
+  businessPersonalProperty?: number;
+  [key: string]: number | undefined;
+}
+
+export interface ExtractedFacts {
+  insuredName?: string;
+  address?: ExtractedAddress;
+  industry?: string;
+  requestedCoverage?: string;
+  limits?: ExtractedLimits;
+  missingFields: string[];
+}
+
+export interface HazardData {
+  femaRiskRating?: string;
+  topHazards: string[];
+  recentDisasterDeclarations?: number;
+  stormEventCounts10Yr?: Record<string, number>;
+}
+
+export type AiBriefConfidence = "low" | "medium" | "high";
+
+export interface AiBrief {
+  executiveSummary: string;
+  riskFlags: string[];
+  questionsForBroker: string[];
+  confidence: AiBriefConfidence;
+}
+
+export interface SourceLink {
+  name: string;
+  url: string;
+}
+
+export interface SubmissionSummaryResponse {
+  submissionId: string;
+  status: Extract<SubmissionStatus, "READY" | "NEEDS_REVIEW">;
+  extracted: ExtractedFacts;
+  hazards: HazardData;
+  aiBrief: AiBrief;
+  sources: SourceLink[];
+}
+
 // GET /api/submissions
 export interface SubmissionListItem {
   submissionId: string;

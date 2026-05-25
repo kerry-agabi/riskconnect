@@ -26,6 +26,8 @@
 
 - Use icons for common actions when an icon library is available.
 - Show upload progress and backend status separately.
+- Use Cognito Hosted UI auth only when deployed auth env vars are configured.
+- Paginate recent submissions with `nextToken` and refresh active processing rows without duplicating list items.
 - `READY`, `NEEDS_REVIEW`, and `FAILED` need distinct visual treatments.
 - Display AI output as a draft requiring broker review.
 
@@ -35,4 +37,3 @@
 - Keyboard-accessible upload and actions.
 - Contrast meets WCAG AA for normal text.
 - The interface looks like a professional internal insurance tool.
-
