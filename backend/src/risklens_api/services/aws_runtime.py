@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import re
 import time
 from datetime import datetime, timezone
@@ -533,6 +534,8 @@ class DynamoSummaryGenerationService:
             "executive_summary, risk_flags, questions_for_broker, confidence. "
             "Keep executive_summary under 90 words, risk_flags to at most 3 items, "
             "and questions_for_broker to at most 3 items. "
+            "confidence must be exactly one of these strings: \"high\", \"medium\", "
+            "or \"low\" (not a number). "
             "Do not make bind, decline, pricing, or actuarial recommendations.\n\n"
             f"Extracted facts:\n{extracted.model_dump_json()}\n\n"
             f"Hazard context:\n{hazards.model_dump_json()}"
@@ -543,6 +546,7 @@ class DynamoSummaryGenerationService:
                 self._model_id,
                 prompt,
                 self._max_output_tokens,
+                self._logger,
             )
             brief = AIBrief.model_validate(data)
         except NonRetryableError as exc:
@@ -688,10 +692,13 @@ def _invoke_bedrock_json(
     model_id: str,
     prompt: str,
     max_tokens: int,
+    logger: logging.Logger | None = None,
 ) -> dict[str, Any]:
+    log = logger or get_logger()
     last_error: Exception | None = None
     previous_text: str | None = None
     for repair in (False, True):
+        attempt = "repair" if repair else "initial"
         prompt_text = prompt if not repair else _build_json_repair_prompt(
             prompt,
             previous_text or "",
@@ -712,6 +719,15 @@ def _invoke_bedrock_json(
                 }
             ],
         }
+        log.info(
+            "Invoking Bedrock model",
+            extra={
+                "component": "summary_generation",
+                "model_id": model_id,
+                "max_tokens": max_tokens,
+                "attempt": attempt,
+            },
+        )
         try:
             response = client.invoke_model(
                 modelId=model_id,
@@ -720,6 +736,37 @@ def _invoke_bedrock_json(
                 accept="application/json",
             )
             payload = json.loads(response["body"].read().decode("utf-8"))
+            stop_reason = payload.get("stop_reason")
+            usage = payload.get("usage") or {}
+            input_tokens = usage.get("input_tokens")
+            output_tokens = usage.get("output_tokens")
+            truncated = stop_reason == "max_tokens"
+            log.info(
+                "Bedrock response received",
+                extra={
+                    "component": "summary_generation",
+                    "model_id": model_id,
+                    "attempt": attempt,
+                    "stop_reason": stop_reason,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "truncated_by_max_tokens": truncated,
+                },
+            )
+            if truncated:
+                # Most common cause of malformed JSON: the model hit the output
+                # ceiling mid-object, so the response is truncated invalid JSON.
+                log.warning(
+                    "Bedrock response stopped on max_tokens; JSON may be truncated",
+                    extra={
+                        "component": "summary_generation",
+                        "model_id": model_id,
+                        "attempt": attempt,
+                        "stop_reason": stop_reason,
+                        "max_tokens": max_tokens,
+                        "output_tokens": output_tokens,
+                    },
+                )
             text = "".join(
                 part.get("text", "")
                 for part in payload.get("content", [])
@@ -733,7 +780,43 @@ def _invoke_bedrock_json(
             raise NonRetryableError(_bedrock_client_error_message(exc)) from exc
         except (json.JSONDecodeError, KeyError, ValueError) as exc:
             last_error = exc
+            # Log a SAFE, truncated snippet so we can tell whether the model
+            # returned prose, a refusal, an empty string, or truncated JSON.
+            # Never log the full response: it may echo untrusted/extracted
+            # submission content (see security-governance PII handling).
+            raw_text = previous_text or ""
+            log.warning(
+                "Bedrock response was not parseable JSON",
+                extra={
+                    "component": "summary_generation",
+                    "model_id": model_id,
+                    "attempt": attempt,
+                    "response_chars": len(raw_text),
+                    "response_snippet": _safe_log_snippet(raw_text),
+                },
+            )
+    log.error(
+        "Bedrock returned invalid JSON after repair attempt",
+        extra={
+            "component": "summary_generation",
+            "model_id": model_id,
+        },
+    )
     raise NonRetryableError("Bedrock returned invalid JSON") from last_error
+
+
+def _safe_log_snippet(text: str, limit: int = 500) -> str:
+    """Return a truncated, clearly labeled snippet of model text for logging.
+
+    The raw response may echo untrusted extracted content, so callers must
+    only ever log this truncated form, never the full text.
+    """
+    snippet = text.strip()
+    if not snippet:
+        return "<empty response>"
+    if len(snippet) > limit:
+        return f"{snippet[:limit]}... [truncated for logging]"
+    return snippet
 
 
 def _bedrock_client_error_message(exc: ClientError) -> str:

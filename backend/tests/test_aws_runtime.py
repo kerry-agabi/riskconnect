@@ -62,8 +62,16 @@ class FakeBedrockBody:
 
 
 class FakeBedrockClient:
-    def __init__(self, responses: list[str]) -> None:
+    def __init__(
+        self,
+        responses: list[str],
+        *,
+        stop_reason: str = "end_turn",
+        usage: dict[str, int] | None = None,
+    ) -> None:
         self.responses = responses
+        self.stop_reason = stop_reason
+        self.usage = usage if usage is not None else {"input_tokens": 50, "output_tokens": 25}
         self.requests: list[dict[str, Any]] = []
 
     def invoke_model(self, **kwargs: Any) -> dict[str, Any]:
@@ -76,7 +84,9 @@ class FakeBedrockClient:
                         "type": "text",
                         "text": text,
                     }
-                ]
+                ],
+                "stop_reason": self.stop_reason,
+                "usage": self.usage,
             })
         }
 
@@ -212,6 +222,84 @@ def test_bedrock_client_validation_error_surfaces_real_message() -> None:
             "Return JSON",
             200,
         )
+
+
+def test_bedrock_logs_stop_reason_and_usage_on_success(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = FakeBedrockClient(
+        ['{"insured_name": "Houston Market"}'],
+        stop_reason="end_turn",
+        usage={"input_tokens": 120, "output_tokens": 40},
+    )
+
+    with caplog.at_level("INFO", logger="risklens"):
+        aws_runtime._invoke_bedrock_json(  # noqa: SLF001
+            client,
+            "eu.anthropic.claude-sonnet-4-6",
+            "Return JSON",
+            200,
+        )
+
+    received = [r for r in caplog.records if r.getMessage() == "Bedrock response received"]
+    assert received
+    record = received[0]
+    assert record.stop_reason == "end_turn"
+    assert record.input_tokens == 120
+    assert record.output_tokens == 40
+    assert record.truncated_by_max_tokens is False
+
+
+def test_bedrock_logs_max_tokens_truncation_warning(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # Truncated JSON object plus a successful repair on the second attempt.
+    client = FakeBedrockClient(
+        ['{"insured_name": "Houston Mark', '{"insured_name": "Houston Market"}'],
+        stop_reason="max_tokens",
+    )
+
+    with caplog.at_level("WARNING", logger="risklens"):
+        aws_runtime._invoke_bedrock_json(  # noqa: SLF001
+            client,
+            "eu.anthropic.claude-sonnet-4-6",
+            "Return JSON",
+            64,
+        )
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert "Bedrock response stopped on max_tokens; JSON may be truncated" in messages
+    assert "Bedrock response was not parseable JSON" in messages
+    parse_fail = next(
+        r for r in caplog.records if r.getMessage() == "Bedrock response was not parseable JSON"
+    )
+    # Snippet is bounded and labeled; never the full untrusted response.
+    assert parse_fail.response_snippet.startswith('{"insured_name"')
+    assert len(parse_fail.response_snippet) <= 520
+
+
+def test_bedrock_parse_failure_snippet_is_truncated_and_safe(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    long_prose = "x" * 2000
+    client = FakeBedrockClient([long_prose, long_prose])
+
+    with caplog.at_level("WARNING", logger="risklens"):
+        with pytest.raises(NonRetryableError, match="Bedrock returned invalid JSON"):
+            aws_runtime._invoke_bedrock_json(  # noqa: SLF001
+                client,
+                "eu.anthropic.claude-sonnet-4-6",
+                "Return JSON",
+                200,
+            )
+
+    parse_fails = [
+        r for r in caplog.records if r.getMessage() == "Bedrock response was not parseable JSON"
+    ]
+    assert len(parse_fails) == 2
+    assert parse_fails[0].response_chars == 2000
+    assert parse_fails[0].response_snippet.endswith("[truncated for logging]")
+    assert len(parse_fails[0].response_snippet) < 600
 
 
 def test_summary_generation_falls_back_when_bedrock_returns_empty_json(

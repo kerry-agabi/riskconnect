@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 from risklens_api.core.constants import SubmissionStatus
 
@@ -364,6 +364,28 @@ class AIBrief(BaseModel):
         None,
         description="Model confidence level: high, medium, or low.",
     )
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def _coerce_confidence(cls, value: object) -> str | None:
+        """Normalize confidence into a categorical bucket.
+
+        The model sometimes emits a numeric probability (e.g. 0.38) instead of
+        the requested categorical value. Map numerics in [0, 1] to high/medium/
+        low buckets and pass through recognized strings.
+        """
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return "high" if value else "low"
+        if isinstance(value, (int, float)):
+            score = float(value)
+            if score >= 0.66:
+                return "high"
+            if score >= 0.33:
+                return "medium"
+            return "low"
+        return str(value)
 
     model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 

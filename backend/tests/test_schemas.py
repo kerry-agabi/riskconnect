@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 from risklens_api.core.constants import SubmissionStatus
 from risklens_api.schemas.submissions import (
     AIBrief,
@@ -101,3 +103,20 @@ def test_summary_submodels_accept_camel_case_from_dynamo() -> None:
     assert hazards.storm_event_counts_10yr is not None
     assert hazards.storm_event_counts_10yr.strong_wind == 83
     assert brief.executive_summary == "Structured fallback summary."
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (0.38, "medium"),
+        (0.9, "high"),
+        (0.1, "low"),
+        (0.66, "high"),
+        (0.33, "medium"),
+        ("high", "high"),
+        (None, None),
+    ],
+)
+def test_ai_brief_coerces_numeric_confidence(raw, expected):
+    brief = AIBrief.model_validate({"confidence": raw})
+    assert brief.confidence == expected
