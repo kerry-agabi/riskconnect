@@ -534,6 +534,8 @@ class DynamoSummaryGenerationService:
             "executive_summary, risk_flags, questions_for_broker, confidence. "
             "Keep executive_summary under 90 words, risk_flags to at most 3 items, "
             "and questions_for_broker to at most 3 items. "
+            "confidence must be exactly one of these strings: \"high\", \"medium\", "
+            "or \"low\" (not a number). "
             "Do not make bind, decline, pricing, or actuarial recommendations.\n\n"
             f"Extracted facts:\n{extracted.model_dump_json()}\n\n"
             f"Hazard context:\n{hazards.model_dump_json()}"
